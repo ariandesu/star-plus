@@ -67,7 +67,7 @@ export default function MissionControlDashboard() {
   return (
     <div className="flex h-screen bg-[#F4F7FC] text-slate-900 overflow-hidden">
       {/* Left Sidebar */}
-      <Sidebar session={session} />
+      <Sidebar />
 
       {/* Main Content View */}
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
