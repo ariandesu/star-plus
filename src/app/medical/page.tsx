@@ -1,24 +1,26 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../../components/Sidebar';
-import HeaderBar from '../../components/HeaderBar';
+import TopHeader from '../../components/TopHeader';
+import AstronautHealthScene, { HealthSystemType } from '../../components/three/AstronautHealthScene';
 import AnalysisModal from '../../components/AnalysisModal';
 import MetricDetailModal from '../../components/MetricDetailModal';
-import GlobalSearchModal from '../../components/GlobalSearchModal';
-import NotificationModal from '../../components/NotificationModal';
 import { MOCK_ASTRONAUTS, MOCK_ALERTS, MAYA_ANALYSIS_SIGNAL } from '../../data/mockData';
 import { authService } from '../../services/authService';
+import { analysisService } from '../../services/analysisService';
 import { DataAdapterService, NormalizedAstronautRecord } from '../../services/dataAdapterService';
 import { TestRunnerService, TestSuiteReport } from '../../services/testRunnerService';
 import { 
   AlertTriangle, ShieldCheck, Stethoscope, Search, Bell, CheckCircle2, 
-  Activity, Heart, Moon, Zap, User, RefreshCw, ChevronRight, FileSpreadsheet, PlayCircle, Filter
+  Activity, Heart, Moon, Zap, User, RefreshCw, ChevronRight, FileSpreadsheet, PlayCircle, Filter,
+  ArrowUpRight, Sparkles, FileText, Check
 } from 'lucide-react';
 
 export default function MedicalPage() {
   const [session, setSession] = useState<any>(null);
   const [selectedAstronautId, setSelectedAstronautId] = useState<string>('maya-chen');
+  const [selectedSystem, setSelectedSystem] = useState<HealthSystemType>('cardiovascular');
+  const [timeHorizon, setTimeHorizon] = useState<'24H' | '7D' | '30D'>('24H');
   const [alerts, setAlerts] = useState(MOCK_ALERTS);
   const [clinicalNotes, setClinicalNotes] = useState<Record<string, string>>({
     'maya-chen': 'Patient experiencing elevated HRV stress recovery flags during Sleep Phase 3. Recommending rest window shift.'
@@ -38,8 +40,6 @@ export default function MedicalPage() {
   // Modal states
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any | null>(null);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   useEffect(() => {
     const s = authService.getSession();
@@ -57,452 +57,440 @@ export default function MedicalPage() {
     showToast(`Alert #${alertId} acknowledged by Flight Medical Officer.`);
   };
 
-  const handleInvestigateAlert = (alertId: string) => {
-    setIsAnalysisOpen(true);
-    showToast(`Opening clinical biomarker signal analysis for Alert #${alertId}`);
-  };
-
-  const handleCreateIntervention = (alertId: string) => {
-    showToast(`Intervention created for Alert #${alertId}. Notification dispatched to Commander.`);
-  };
-
-  const handleAddNote = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNote.trim()) return;
-    setClinicalNotes(prev => ({
-      ...prev,
-      [selectedAstronautId]: `${prev[selectedAstronautId] || ''}\n[${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}] ${newNote}`
-    }));
-    setNewNote('');
-    showToast('Clinical note logged securely.');
-  };
-
-  const handleRunQaTestSuite = () => {
+  const handleRunQaSuite = () => {
     const report = TestRunnerService.runTestSuite();
     setQaReport(report);
     setActiveTab('TEST_SUITE');
-    showToast(`QA Test Suite executed: ${report.passedCount}/${report.totalScenarios} scenarios matched.`);
+    showToast(`QA Test Suite Completed: ${report.passedCount}/${report.totalScenarios} Scenarios Passed.`);
   };
 
-  const selectedAstronaut = MOCK_ASTRONAUTS.find(a => a.id === selectedAstronautId) || MOCK_ASTRONAUTS[0];
-  const stats = DataAdapterService.getDatasetStatistics();
+  const handleAddNote = () => {
+    if (!newNote.trim()) return;
+    setClinicalNotes(prev => ({
+      ...prev,
+      [selectedAstronautId]: `${prev[selectedAstronautId] ? prev[selectedAstronautId] + '\n\n' : ''}[${new Date().toLocaleTimeString()}] ${newNote}`
+    }));
+    setNewNote('');
+    showToast('Clinical note logged successfully.');
+  };
 
-  const filteredRecords = datasetRecords.filter(r => {
-    const matchesFilter = datasetFilter === 'ALL' || r.status === datasetFilter;
-    const matchesSearch = r.astronautId.toLowerCase().includes(datasetSearch.toLowerCase()) || 
-                          r.symptom.toLowerCase().includes(datasetSearch.toLowerCase()) ||
-                          r.name.toLowerCase().includes(datasetSearch.toLowerCase());
-    return matchesFilter && matchesSearch;
+  const currentAstronaut = MOCK_ASTRONAUTS.find(a => a.id === selectedAstronautId) || MOCK_ASTRONAUTS[0];
+
+  const filteredDataset = datasetRecords.filter(r => {
+    if (datasetFilter !== 'ALL' && r.status !== datasetFilter) return false;
+    if (datasetSearch.trim()) {
+      const q = datasetSearch.toLowerCase();
+      return r.id.toLowerCase().includes(q) || r.name.toLowerCase().includes(q) || r.symptom.toLowerCase().includes(q);
+    }
+    return true;
   });
 
   return (
-    <div className="flex h-screen bg-[#F4F7FC] text-slate-800 overflow-hidden font-sans">
-      <Sidebar />
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <HeaderBar 
-          onSearchClick={() => setIsSearchOpen(true)}
-          onNotificationClick={() => setIsNotificationsOpen(true)}
-          selectedAstronautId={selectedAstronautId}
-          onAstronautChange={setSelectedAstronautId}
-        />
+    <div className="min-h-screen bg-[#F4F7FC] text-slate-900 font-sans flex flex-col">
+      
+      {/* Top Header matching reference layout */}
+      <TopHeader
+        session={session}
+        greeting="Flight Medical Officer Command"
+        subtitle="AURORA-1 Crew Health Surveillance & Decision Support"
+        selectedAstronautId={selectedAstronautId}
+        onAstronautChange={(id) => setSelectedAstronautId(id)}
+        selectedTimeHorizon={timeHorizon}
+        onTimeHorizonChange={(h) => setTimeHorizon(h)}
+      />
 
-        {toastMessage && (
-          <div className="fixed top-16 right-6 z-50 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-3 text-xs font-semibold border border-slate-700 animate-fade-in">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-            <span>{toastMessage}</span>
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700 text-xs font-bold flex items-center gap-2 animate-bounce">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Main Content Layout (40/60 Asymmetrical Composition) */}
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+        
+        {/* Navigation Tabs (Clinical Overview, 1,000 Records Explorer, QA Suite) */}
+        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setActiveTab('CLINICAL')}
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition ${
+                activeTab === 'CLINICAL'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/60'
+              }`}
+            >
+              Crew Clinical Surveillance
+            </button>
+            <button
+              onClick={() => setActiveTab('DATASET')}
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition flex items-center gap-1.5 ${
+                activeTab === 'DATASET'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/60'
+              }`}
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Research Dataset (1,000 Records)</span>
+            </button>
+            <button
+              onClick={handleRunQaSuite}
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition flex items-center gap-1.5 ${
+                activeTab === 'TEST_SUITE'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/60'
+              }`}
+            >
+              <PlayCircle className="w-3.5 h-3.5 text-emerald-500" />
+              <span>QA Test Suite (Dataset B)</span>
+            </button>
           </div>
-        )}
 
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
-          {/* Header Banner */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-100/60 shadow-sm">
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-blue-100 text-blue-800 tracking-wider">
-                  FLIGHT MEDICAL OFFICER DASHBOARD
+          <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-500">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>4 Crew Members Active</span>
+          </div>
+        </div>
+
+        {activeTab === 'CLINICAL' && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            {/* ========================================================= */}
+            {/* LEFT COLUMN (~40% desktop, 5 cols out of 12)             */}
+            {/* Three.js 3D Visual Centerpiece, Roster & System Selectors */}
+            {/* ========================================================= */}
+            <div className="lg:col-span-5 space-y-4">
+              
+              {/* Three.js 3D Health Visualizer */}
+              <AstronautHealthScene
+                selectedSystem={selectedSystem}
+                onSelectSystem={(sys) => setSelectedSystem(sys)}
+                astronautName={currentAstronaut.name}
+                heartRate={selectedAstronautId === 'maya-chen' ? 65 : 72}
+                spo2={98}
+                sleepHours={selectedAstronautId === 'maya-chen' ? 4.8 : 7.2}
+                stressIndex={selectedAstronautId === 'maya-chen' ? 26 : 18}
+              />
+
+              {/* Crew Roster Quick Target Selector */}
+              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
+                  Select Active Astronaut Target
                 </span>
-                <span className="text-xs text-slate-400 font-medium">• AURORA-1 (Synthetic Demonstration)</span>
-              </div>
-              <h1 className="text-2xl font-bold text-slate-900 mt-1">Crew Clinical Surveillance & Decision Support</h1>
-              <p className="text-xs text-slate-500 mt-0.5">Biomarker baseline tracking, reactive triage, and Dataset QA verification.</p>
-            </div>
 
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setActiveTab('CLINICAL')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                  activeTab === 'CLINICAL' 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' 
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                Clinical Triage
-              </button>
-              <button
-                onClick={() => setActiveTab('DATASET')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
-                  activeTab === 'DATASET' 
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20' 
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
-              >
-                <FileSpreadsheet className="w-3.5 h-3.5" />
-                <span>1,000 Records Dataset</span>
-              </button>
-              <button
-                onClick={handleRunQaTestSuite}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center space-x-2 ${
-                  activeTab === 'TEST_SUITE' 
-                    ? 'bg-emerald-600 text-white shadow-md shadow-emerald-500/20' 
-                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                }`}
-              >
-                <PlayCircle className="w-3.5 h-3.5" />
-                <span>Run QA Suite (Dataset B)</span>
-              </button>
-            </div>
-          </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  {MOCK_ASTRONAUTS.map((a) => {
+                    const isSelected = selectedAstronautId === a.id;
+                    const isWatch = a.status === 'WATCH';
 
-          <p className="text-[11px] font-bold text-slate-500 text-center py-1">
-            ⚠️ Demo environment using synthetic space mission dataset. Not a medical diagnostic system.
-          </p>
-
-          {/* TAB 1: CLINICAL TRIAGE */}
-          {activeTab === 'CLINICAL' && (
-            <div className="space-y-6">
-              {/* Alert Feed */}
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-100/60 shadow-sm space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <AlertTriangle className="w-5 h-5 text-amber-500" />
-                    <h2 className="text-base font-bold text-slate-900">Active Alert Triage Feed</h2>
-                  </div>
-                  <span className="text-xs font-semibold text-slate-400">{alerts.length} Total Alerts</span>
-                </div>
-
-                <div className="space-y-3">
-                  {alerts.map(alert => (
-                    <div 
-                      key={alert.id}
-                      className={`p-4 rounded-xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                        alert.severity === 'CRITICAL' ? 'bg-amber-50/50 border-amber-200/60' : 'bg-slate-50/50 border-slate-200/60'
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className={`p-2 rounded-lg mt-0.5 ${
-                          alert.severity === 'CRITICAL' ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'
-                        }`}>
-                          <AlertTriangle className="w-4 h-4" />
-                        </div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-bold text-xs text-slate-900">{alert.astronautName}</span>
-                            <span className="text-[10px] text-slate-400">• {alert.timestamp}</span>
-                            {alert.status === 'ACKNOWLEDGED' && (
-                              <span className="px-2 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-100 text-blue-800">
-                                ACKNOWLEDGED BY MEDICAL
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs font-semibold text-slate-700 mt-1">{alert.title}</p>
-                          <p className="text-[11px] text-slate-500 mt-0.5">{alert.description}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 shrink-0 self-end md:self-center">
-                        {alert.status !== 'ACKNOWLEDGED' && (
-                          <button 
-                            onClick={() => handleAcknowledgeAlert(alert.id)}
-                            className="px-3 py-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-xs font-bold text-slate-700 shadow-sm"
-                          >
-                            Acknowledge
-                          </button>
-                        )}
-                        <button 
-                          onClick={() => handleInvestigateAlert(alert.id)}
-                          className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm shadow-blue-500/20"
-                        >
-                          Investigate Signal
-                        </button>
-                        <button 
-                          onClick={() => handleCreateIntervention(alert.id)}
-                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm shadow-emerald-500/20"
-                        >
-                          Create Intervention
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Selected Astronaut Overview & Clinical Notes */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-100/60 shadow-sm space-y-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-[10px] font-extrabold uppercase text-slate-400">PATIENT SURVEILLANCE</span>
-                      <h2 className="text-lg font-bold text-slate-900">{selectedAstronaut.name} ({selectedAstronaut.role})</h2>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                      selectedAstronaut.status === 'WATCH' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      STATUS: {selectedAstronaut.status}
-                    </span>
-                  </div>
-
-                  {/* Why Flagged Trigger */}
-                  {selectedAstronaut.status === 'WATCH' && (
-                    <div className="p-4 rounded-xl bg-amber-50 border border-amber-200/80 flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
-                        <div>
-                          <p className="text-xs font-bold text-amber-900">Multi-System Physiological WATCH Signal Active</p>
-                          <p className="text-[11px] text-amber-700">Sleep disruption (-19%) paired with elevated HRV stress recovery flags.</p>
-                        </div>
-                      </div>
+                    return (
                       <button
-                        onClick={() => setIsAnalysisOpen(true)}
-                        className="px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold shadow-md shrink-0"
+                        key={a.id}
+                        onClick={() => setSelectedAstronautId(a.id)}
+                        className={`p-3 rounded-2xl border transition text-left flex flex-col justify-between ${
+                          isSelected
+                            ? 'bg-blue-50/80 border-blue-600 shadow-2xs'
+                            : 'bg-slate-50/70 border-slate-100 hover:bg-slate-100'
+                        }`}
                       >
-                        Why was this flagged?
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-extrabold text-slate-900">{a.name}</span>
+                          <span className={`w-2 h-2 rounded-full ${isWatch ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`} />
+                        </div>
+                        <span className="text-[10px] text-slate-500 font-semibold mt-1">{a.role}</span>
                       </button>
-                    </div>
-                  )}
-
-                  {/* Vitals baseline breakdown */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                    <div className="p-4 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400">SLEEP DURATION</span>
-                      <p className="text-lg font-bold text-slate-900 mt-1">4.8h <span className="text-xs font-medium text-slate-400">/ 7.5h baseline</span></p>
-                      <span className="text-[10px] font-bold text-amber-600">-19% deviation</span>
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400">RESTING HEART RATE</span>
-                      <p className="text-lg font-bold text-slate-900 mt-1">65 bpm <span className="text-xs font-medium text-slate-400">/ 60 bpm baseline</span></p>
-                      <span className="text-[10px] font-bold text-amber-600">+8% deviation</span>
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400">EXERCISE SCORE</span>
-                      <p className="text-lg font-bold text-slate-900 mt-1">82 <span className="text-xs font-medium text-slate-400">/ 92 baseline</span></p>
-                      <span className="text-[10px] font-bold text-amber-600">-11% deviation</span>
-                    </div>
-                    <div className="p-4 rounded-xl bg-slate-50/60 border border-slate-100">
-                      <span className="text-[10px] font-bold text-slate-400">REACTION TIME</span>
-                      <p className="text-lg font-bold text-slate-900 mt-1">229 ms <span className="text-xs font-medium text-slate-400">/ 210 ms baseline</span></p>
-                      <span className="text-[10px] font-bold text-amber-600">+9% deviation</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Scoped Clinical Notes */}
-                <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-100/60 shadow-sm flex flex-col justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">Clinical Notes ({selectedAstronaut.name})</h3>
-                    <div className="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-700 whitespace-pre-wrap max-h-48 overflow-y-auto">
-                      {clinicalNotes[selectedAstronautId] || 'No notes logged yet.'}
-                    </div>
-                  </div>
-
-                  <form onSubmit={handleAddNote} className="mt-4 space-y-2">
-                    <textarea
-                      value={newNote}
-                      onChange={e => setNewNote(e.target.value)}
-                      placeholder="Log medical observation or protocol note..."
-                      className="w-full text-xs p-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                      rows={3}
-                    />
-                    <button
-                      type="submit"
-                      className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20"
-                    >
-                      Log Clinical Note
-                    </button>
-                  </form>
+                    );
+                  })}
                 </div>
               </div>
+
             </div>
-          )}
 
-          {/* TAB 2: DATASET A (1,000 RESEARCH RECORDS) */}
-          {activeTab === 'DATASET' && (
-            <div className="space-y-6">
-              {/* Dataset Stats Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100/60 shadow-sm">
-                  <span className="text-[10px] font-extrabold uppercase text-slate-400">TOTAL RECORDS</span>
-                  <p className="text-2xl font-extrabold text-slate-900 mt-1">{stats.totalRecords}</p>
-                  <span className="text-[10px] font-semibold text-slate-500">{stats.provenanceDisclaimer}</span>
-                </div>
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100/60 shadow-sm">
-                  <span className="text-[10px] font-extrabold uppercase text-emerald-600">NOMINAL CREW</span>
-                  <p className="text-2xl font-extrabold text-emerald-700 mt-1">{stats.nominalCount}</p>
-                  <span className="text-[10px] font-semibold text-slate-500">Normal biomarker parameters</span>
-                </div>
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100/60 shadow-sm">
-                  <span className="text-[10px] font-extrabold uppercase text-amber-600">WATCH CREW</span>
-                  <p className="text-2xl font-extrabold text-amber-700 mt-1">{stats.watchCount}</p>
-                  <span className="text-[10px] font-semibold text-slate-500">Requires monitoring</span>
-                </div>
-                <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100/60 shadow-sm">
-                  <span className="text-[10px] font-extrabold uppercase text-rose-600">CRITICAL CREW</span>
-                  <p className="text-2xl font-extrabold text-rose-700 mt-1">{stats.criticalCount}</p>
-                  <span className="text-[10px] font-semibold text-slate-500">High physiological stress</span>
-                </div>
-              </div>
+            {/* ========================================================= */}
+            {/* RIGHT COLUMN (~60% desktop, 7 cols out of 12)            */}
+            {/* Medical Analysis, Clinical Notes & Alert Triage Feed      */}
+            {/* ========================================================= */}
+            <div className="lg:col-span-7 space-y-6">
+              
+              {/* Upper Right: Medical Analysis & AI Explainability Panel */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                        currentAstronaut.status === 'WATCH' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        STATUS: {currentAstronaut.status}
+                      </span>
+                      <span className="text-xs font-semibold text-slate-400">Target: {currentAstronaut.name}</span>
+                    </div>
+                    <h2 className="text-xl font-black text-slate-900 tracking-tight mt-1">
+                      Multi-System Physiological Deviation Matrix
+                    </h2>
+                  </div>
 
-              {/* Dataset Search & Filter Bar */}
-              <div className="bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-100/60 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="relative w-full sm:w-80">
-                  <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-                  <input
-                    type="text"
-                    value={datasetSearch}
-                    onChange={e => setDatasetSearch(e.target.value)}
-                    placeholder="Search by ID, name, or symptom..."
-                    className="w-full text-xs pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold text-slate-400">Status Filter:</span>
-                  {(['ALL', 'WATCH', 'CRITICAL', 'NOMINAL'] as const).map(f => (
+                  {selectedAstronautId === 'maya-chen' && (
                     <button
-                      key={f}
-                      onClick={() => setDatasetFilter(f)}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all ${
-                        datasetFilter === f ? 'bg-blue-600 text-white shadow-sm' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
+                      onClick={() => setIsAnalysisOpen(true)}
+                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer shrink-0"
                     >
-                      {f}
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Why was this flagged?</span>
                     </button>
-                  ))}
+                  )}
                 </div>
-              </div>
 
-              {/* Data Table */}
-              <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-100/60 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto max-h-[500px]">
+                {/* Baseline Deviation Matrix Table */}
+                <div className="overflow-x-auto pt-1">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-slate-50/80 sticky top-0 text-slate-400 uppercase font-extrabold text-[10px] tracking-wider border-b border-slate-100">
-                      <tr>
-                        <th className="py-3 px-4">Astronaut ID</th>
-                        <th className="py-3 px-4">Age / Days</th>
-                        <th className="py-3 px-4">Heart Rate</th>
-                        <th className="py-3 px-4">Blood Pressure</th>
-                        <th className="py-3 px-4">Bone Density</th>
-                        <th className="py-3 px-4">Sleep Hours</th>
-                        <th className="py-3 px-4">Symptom</th>
-                        <th className="py-3 px-4">Status</th>
+                    <thead>
+                      <tr className="border-b border-slate-100 text-slate-400 text-[10px] uppercase font-bold tracking-wider">
+                        <th className="py-2.5 px-3">BIOMARKER</th>
+                        <th className="py-2.5 px-3">CURRENT VALUE</th>
+                        <th className="py-2.5 px-3">MISSION BASELINE</th>
+                        <th className="py-2.5 px-3">DEVIATION</th>
+                        <th className="py-2.5 px-3 text-right">EVALUATION</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {filteredRecords.slice(0, 50).map(r => (
-                        <tr key={r.id} className="hover:bg-slate-50/50">
-                          <td className="py-3 px-4 font-bold text-slate-900">{r.id}</td>
-                          <td className="py-3 px-4 text-slate-600">{r.age} yrs / {r.missionDays}d</td>
-                          <td className="py-3 px-4 font-semibold text-slate-800">{r.heartRate} bpm</td>
-                          <td className="py-3 px-4 text-slate-600">{r.bloodPressure}</td>
-                          <td className="py-3 px-4 text-slate-600">{r.boneDensity} g/cm²</td>
-                          <td className="py-3 px-4 font-semibold text-slate-800">{r.sleepHours} h</td>
-                          <td className="py-3 px-4 text-slate-600">{r.symptom}</td>
-                          <td className="py-3 px-4">
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                              r.status === 'CRITICAL' ? 'bg-rose-100 text-rose-800' :
-                              r.status === 'WATCH' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                            }`}>
-                              {r.status}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                      <tr>
+                        <td className="py-3 px-3 font-bold text-slate-900">Resting Heart Rate</td>
+                        <td className="py-3 px-3 font-semibold text-slate-700">{selectedAstronautId === 'maya-chen' ? '65 bpm' : '60 bpm'}</td>
+                        <td className="py-3 px-3 text-slate-500">60 bpm</td>
+                        <td className="py-3 px-3 font-bold text-amber-600">+8.3%</td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">WATCH</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-3 font-bold text-slate-900">Sleep Duration (24H)</td>
+                        <td className="py-3 px-3 font-semibold text-slate-700">{selectedAstronautId === 'maya-chen' ? '4.8 hours' : '7.5 hours'}</td>
+                        <td className="py-3 px-3 text-slate-500">7.5 hours</td>
+                        <td className="py-3 px-3 font-bold text-amber-600">-19.2%</td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">DEFICIT</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="py-3 px-3 font-bold text-slate-900">Blood Oxygen (SpO2)</td>
+                        <td className="py-3 px-3 font-semibold text-slate-700">98%</td>
+                        <td className="py-3 px-3 text-slate-500">98%</td>
+                        <td className="py-3 px-3 font-bold text-emerald-600">0.0%</td>
+                        <td className="py-3 px-3 text-right">
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">NOMINAL</span>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
-                <div className="p-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-400 text-center font-medium">
-                  Showing top 50 of {filteredRecords.length} filtered research records (total 1,000 records loaded).
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* TAB 3: DATASET B QA TEST SUITE */}
-          {activeTab === 'TEST_SUITE' && qaReport && (
-            <div className="space-y-6">
-              <div className="bg-white/80 backdrop-blur-md p-6 rounded-2xl border border-slate-100/60 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900">Dataset B — Automated QA Test Suite Report</h2>
-                  <p className="text-xs text-slate-500 mt-0.5">Evaluating 10 explicit test scenario records against STAR PLUS rule engine.</p>
+              </div>
+
+              {/* Middle Right: Clinical Notes Logger */}
+              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-blue-600" />
+                    <span>Clinical Notes — {currentAstronaut.name}</span>
+                  </h3>
                 </div>
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <span className="text-[10px] font-extrabold uppercase text-slate-400">PASSED MATCHES</span>
-                    <p className="text-xl font-extrabold text-emerald-600">{qaReport.passedCount} / {qaReport.totalScenarios}</p>
-                  </div>
+
+                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap max-h-[120px] overflow-y-auto">
+                  {clinicalNotes[selectedAstronautId] || 'No active notes logged for this astronaut.'}
+                </div>
+
+                <div className="flex items-center gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={newNote}
+                    onChange={(e) => setNewNote(e.target.value)}
+                    placeholder={`Log clinical recommendation for ${currentAstronaut.name}...`}
+                    className="flex-1 px-4 py-2 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
                   <button
-                    onClick={handleRunQaTestSuite}
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md shadow-emerald-500/20"
+                    onClick={handleAddNote}
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
                   >
-                    Re-run Test Suite
+                    Add Note
                   </button>
                 </div>
               </div>
 
-              <div className="bg-white/80 backdrop-blur-md rounded-2xl border border-slate-100/60 shadow-sm overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-400 uppercase font-extrabold text-[10px] tracking-wider border-b border-slate-100">
-                    <tr>
-                      <th className="py-3 px-4">Scenario ID</th>
-                      <th className="py-3 px-4">Astronaut Name</th>
-                      <th className="py-3 px-4">Vitals & Symptom</th>
-                      <th className="py-3 px-4">Expected Recommendation</th>
-                      <th className="py-3 px-4">Generated Logic Output</th>
-                      <th className="py-3 px-4">QA Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {qaReport.results.map(r => (
-                      <tr key={r.scenarioId} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-4 font-bold text-slate-900">{r.scenarioId}</td>
-                        <td className="py-3 px-4 font-semibold text-slate-800">{r.astronautName}</td>
-                        <td className="py-3 px-4 text-slate-600">{r.sleepHours}h sleep • {r.heartRate} bpm • {r.symptom}</td>
-                        <td className="py-3 px-4 font-medium text-slate-700">{r.expectedOutcome}</td>
-                        <td className="py-3 px-4 font-medium text-blue-700">{r.generatedRecommendation}</td>
-                        <td className="py-3 px-4">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold ${
-                            r.status === 'PASS' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
+              {/* Bottom Right: Alert Triage Feed */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <span>Real-Time Alert Triage Feed</span>
+                </h3>
+
+                <div className="space-y-3">
+                  {alerts.map((alert) => (
+                    <div
+                      key={alert.id}
+                      className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${
+                            alert.severity === 'CRITICAL' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
                           }`}>
-                            {r.status}
+                            {alert.severity}
                           </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          <span className="text-xs font-bold text-slate-900">{alert.title}</span>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">{alert.description}</p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0">
+                        {alert.status === 'ACKNOWLEDGED' ? (
+                          <span className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
+                            ✓ ACKNOWLEDGED
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleAcknowledgeAlert(alert.id)}
+                            className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
+                          >
+                            Acknowledge
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* 1,000 Records Research Dataset View */}
+        {activeTab === 'DATASET' && (
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-black text-slate-900">Research Astronaut Dataset (1,000 Records)</h2>
+                <p className="text-xs text-slate-500">Normalized health telemetry dataset for Space Apps statistical analysis.</p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={datasetSearch}
+                  onChange={(e) => setDatasetSearch(e.target.value)}
+                  placeholder="Search ID, Name, Symptom..."
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none"
+                />
               </div>
             </div>
-          )}
-        </main>
-      </div>
 
-      <AnalysisModal 
-        isOpen={isAnalysisOpen}
-        onClose={() => setIsAnalysisOpen(false)}
-        signal={MAYA_ANALYSIS_SIGNAL}
-      />
-      <MetricDetailModal 
-        isOpen={!!selectedMetric}
-        onClose={() => setSelectedMetric(null)}
-        metric={selectedMetric}
-      />
-      <GlobalSearchModal 
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-      />
-      <NotificationModal 
-        isOpen={isNotificationsOpen}
-        onClose={() => setIsNotificationsOpen(false)}
-      />
+            <div className="overflow-x-auto max-h-[500px]">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 sticky top-0">
+                  <tr className="border-b border-slate-200 text-slate-400 font-bold">
+                    <th className="py-2.5 px-3">ASTRONAUT ID</th>
+                    <th className="py-2.5 px-3">NAME</th>
+                    <th className="py-2.5 px-3">AGE</th>
+                    <th className="py-2.5 px-3">MISSION DAYS</th>
+                    <th className="py-2.5 px-3">HEART RATE</th>
+                    <th className="py-2.5 px-3">BLOOD PRESSURE</th>
+                    <th className="py-2.5 px-3">PRIMARY SYMPTOM</th>
+                    <th className="py-2.5 px-3 text-right">STATUS</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono">
+                  {filteredDataset.slice(0, 50).map((r) => (
+                    <tr key={r.id} className="hover:bg-slate-50">
+                      <td className="py-2.5 px-3 font-bold text-blue-600">{r.id}</td>
+                      <td className="py-2.5 px-3 font-sans font-semibold text-slate-800">{r.name}</td>
+                      <td className="py-2.5 px-3 text-slate-600">{r.age}</td>
+                      <td className="py-2.5 px-3 text-slate-600">{r.missionDays}d</td>
+                      <td className="py-2.5 px-3 font-bold text-slate-900">{r.heartRate} bpm</td>
+                      <td className="py-2.5 px-3 text-slate-600">{r.bloodPressure}</td>
+                      <td className="py-2.5 px-3 font-sans text-slate-700">{r.symptom}</td>
+                      <td className="py-2.5 px-3 text-right font-sans">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                          r.status === 'CRITICAL' ? 'bg-red-100 text-red-800' :
+                          r.status === 'WATCH' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {r.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* QA Test Suite (Dataset B) View */}
+        {activeTab === 'TEST_SUITE' && qaReport && (
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
+              <div>
+                <h2 className="text-xl font-black text-slate-900">Dataset B QA Evaluation Report</h2>
+                <p className="text-xs text-slate-500">Automated decision support accuracy evaluation against 10 test case scenarios.</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-black text-emerald-600">
+                  {qaReport.passedCount} / {qaReport.totalScenarios} PASSED
+                </span>
+                <button
+                  onClick={handleRunQaSuite}
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span>Re-run Test Suite</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {qaReport.results.map((res) => (
+                <div key={res.scenarioId} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-slate-900">{res.scenarioId}: {res.astronautName}</span>
+                      <span className="text-xs text-slate-500">({res.heartRate} bpm, {res.sleepHours}h sleep)</span>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-1">Outcome: <strong className="text-slate-900">{res.generatedRecommendation}</strong></p>
+                  </div>
+
+                  <span className={`px-3 py-1 rounded-xl text-xs font-extrabold ${
+                    res.status === 'PASS' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {res.status === 'PASS' ? '✓ PASSED' : '❌ DISCREPANCY'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </main>
+
+      {/* Modals */}
+      {selectedMetric && (
+        <MetricDetailModal
+          metric={selectedMetric}
+          isOpen={!!selectedMetric}
+          onClose={() => setSelectedMetric(null)}
+        />
+      )}
+
+      {isAnalysisOpen && (
+        <AnalysisModal
+          signal={analysisService.getAnalysisSignal(selectedAstronautId)}
+          isOpen={isAnalysisOpen}
+          onClose={() => setIsAnalysisOpen(false)}
+        />
+      )}
+
     </div>
   );
 }
