@@ -31,6 +31,7 @@ import React, {
 } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, useGLTF, useProgress } from '@react-three/drei';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import * as THREE from 'three';
 import {
   ALL_SYSTEM_KEYS,
@@ -67,41 +68,117 @@ interface StructureEntry {
   mesh: THREE.Mesh;
   /** Raw glTF node name identifying the anatomical structure. */
   name: string;
+  /** Material shown for this structure when it is not highlighted. */
+  base: THREE.Material;
 }
 
 /**
- * Shared materials for the whole scene.
+ * Appearance used only for meshes that carry no authored material.
  *
- * Every structure uses the same base material and only the active structure is
- * switched to the highlight material. Per-mesh materials would mean one shader
- * program and one draw call per structure — with 246 skeleton meshes that is
- * 246 programs, which is enough to stall the main thread while they compile.
- * Sharing keeps the program count at two regardless of model complexity.
+ * The reference organs are authored with curated per-structure colours — the
+ * heart ships `#ca7571` at roughness 0.25, the lung separates `lung_mat`
+ * (tissue) from `mucosa_mat` and `Cartilage_Mat`, the brain separates brain
+ * from retina. Those MUST be preserved: overlaying one flat colour on all of
+ * them discards the contrast that identifies tissue boundaries in the first
+ * place.
  *
- * Materials are deliberately opaque: a transparent base would push every
- * structure into the depth-sorted transparent pass. Visibility is driven by
- * `mesh.visible`, not by opacity.
+ * A model with no materials at all is the exception. GLTFLoader then hands
+ * every mesh the glTF spec default (white, metalness 1, roughness 1), which
+ * renders as dull grey metal — the skeleton GLB is exactly this case. These
+ * fallbacks supply a plausible tissue appearance per system so such a model
+ * still reads as anatomy rather than as chrome.
  */
-function createMaterials(): {
-  base: THREE.MeshStandardMaterial;
-  highlight: THREE.MeshStandardMaterial;
-} {
-  const base = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(BASE_COLOR),
-    roughness: 0.6,
-    metalness: 0.04,
-    // Reference meshes from these sources are not guaranteed to have consistent
+const FALLBACK_APPEARANCE: Record<
+  OrganSystemKey,
+  { color: string; roughness: number; metalness: number }
+> = {
+  CARDIOVASCULAR: { color: '#b4534d', roughness: 0.55, metalness: 0.02 },
+  RESPIRATORY: { color: '#e0b0b3', roughness: 0.6, metalness: 0.02 },
+  COGNITIVE: { color: '#efb4a2', roughness: 0.6, metalness: 0.02 },
+  // Cortical bone is warm off-white, not white, and only faintly specular.
+  MUSCULOSKELETAL: { color: '#e9e3d6', roughness: 0.55, metalness: 0.02 },
+  SLEEP: { color: '#d9a5aa', roughness: 0.6, metalness: 0.02 },
+};
+
+/**
+ * True when a loaded material carries authored appearance worth keeping.
+ *
+ * The spec default is detected structurally rather than by name: an untextured
+ * material at metalness 1 / roughness 1 is what the glTF loader substitutes for
+ * a missing material, and it is never a deliberate artist choice.
+ */
+function hasAuthoredAppearance(material: THREE.Material | null | undefined): boolean {
+  if (!material) return false;
+  const standard = material as THREE.MeshStandardMaterial;
+  // Anything that is not a standard material is authored on purpose.
+  if (standard.isMeshStandardMaterial !== true) return true;
+  if (standard.map || standard.normalMap || standard.roughnessMap || standard.metalnessMap) {
+    return true;
+  }
+  return !(standard.metalness >= 0.99 && standard.roughness >= 0.99);
+}
+
+function createFallbackMaterial(system: OrganSystemKey): THREE.MeshStandardMaterial {
+  const look = FALLBACK_APPEARANCE[system];
+  return new THREE.MeshStandardMaterial({
+    color: new THREE.Color(look.color),
+    roughness: look.roughness,
+    metalness: look.metalness,
+    // Models that ship no materials are also not guaranteed to have consistent
     // winding, so both faces are drawn.
     side: THREE.DoubleSide,
   });
-  const highlight = new THREE.MeshStandardMaterial({
+}
+
+/**
+ * One shared highlight material for the whole scene.
+ *
+ * Only the active structure is switched to it, so the program count stays at
+ * the number of distinct source materials plus one no matter how many
+ * structures a model has.
+ *
+ * It is deliberately opaque: a transparent highlight would push every
+ * structure into the depth-sorted transparent pass. Visibility is driven by
+ * `mesh.visible`, not by opacity.
+ */
+function createHighlightMaterial(): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
     color: new THREE.Color(BASE_COLOR),
     roughness: 0.5,
     metalness: 0.05,
     side: THREE.DoubleSide,
     emissive: new THREE.Color(0x000000),
   });
-  return { base, highlight };
+}
+
+/**
+ * Image-based lighting from a neutral studio room.
+ *
+ * MeshStandardMaterial only shows specular response when the scene has an
+ * environment; with lights alone every surface reads as flat matte no matter
+ * how good its roughness map is. RoomEnvironment is generated procedurally, so
+ * this costs no network request and no HDR asset.
+ */
+function StudioEnvironment({ intensity = 0.55 }: { intensity?: number }) {
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const room = new RoomEnvironment();
+    const target = pmrem.fromScene(room, 0.04);
+    scene.environment = target.texture;
+    scene.environmentIntensity = intensity;
+    room.dispose?.();
+    pmrem.dispose();
+
+    return () => {
+      scene.environment = null;
+      target.texture.dispose();
+    };
+  }, [gl, scene, intensity]);
+
+  return null;
 }
 
 /**
@@ -110,9 +187,14 @@ function createMaterials(): {
  * Some exporters name only the parent node, so a mesh with an empty name
  * inherits the nearest named ancestor.
  */
-function collectStructures(root: THREE.Object3D): StructureEntry[] {
+function collectStructures(root: THREE.Object3D, system: OrganSystemKey): StructureEntry[] {
   const entries: StructureEntry[] = [];
   const inherited = new Map<THREE.Object3D, string>();
+
+  // One shared fallback per system, so the skeleton's 246 untextured meshes
+  // still compile a single program instead of one per mesh.
+  let fallback: THREE.MeshStandardMaterial | null = null;
+  const fallbackFor = () => (fallback ??= createFallbackMaterial(system));
 
   root.traverse((obj) => {
     const name = obj.name || (obj.parent ? inherited.get(obj.parent) ?? '' : '');
@@ -121,7 +203,14 @@ function collectStructures(root: THREE.Object3D): StructureEntry[] {
     if (!mesh.isMesh || !mesh.geometry) return;
     mesh.castShadow = false;
     mesh.receiveShadow = false;
-    entries.push({ mesh, name: name || 'structure' });
+    // A mesh may carry a material array (multi-material geometry); the first
+    // slot is the one the viewer would show, so judge the group by that.
+    const authored = Array.isArray(mesh.material) ? mesh.material[0] : mesh.material;
+    entries.push({
+      mesh,
+      name: name || 'structure',
+      base: hasAuthoredAppearance(authored) ? (authored as THREE.Material) : fallbackFor(),
+    });
   });
 
   return entries;
@@ -180,14 +269,18 @@ function OrganScene({
   const controlsRef = useRef<any>(null);
 
   const [entries, setEntries] = useState<StructureEntry[]>([]);
-  const materials = useMemo(() => createMaterials(), []);
+  const materials = useMemo(() => ({ highlight: createHighlightMaterial() }), []);
 
   // Adopt the loaded graph once per model, then measure and frame it.
   useEffect(() => {
     const root = gltf.scene;
-    const collected = collectStructures(root);
+    const collected = collectStructures(root, system);
     setEntries(collected);
     onStructures(collected.map((e) => e.name));
+    // Show each structure with the appearance it was authored with.
+    for (const entry of collected) {
+      if (entry.mesh.material !== entry.base) entry.mesh.material = entry.base;
+    }
 
     // Frame the camera on the real geometry.
     const { center, radius } = measure(collected);
@@ -210,10 +303,10 @@ function OrganScene({
     return () => setEntries([]);
   }, [gltf, camera, system, onStructures]);
 
-  // Dispose the shared materials when the viewer unmounts.
+  // Dispose the shared highlight material when the viewer unmounts. Authored
+  // materials belong to the loaded glTF and are disposed with it.
   useEffect(
     () => () => {
-      materials.base.dispose();
       materials.highlight.dispose();
     },
     [materials]
@@ -239,7 +332,7 @@ function OrganScene({
       const allowedByIsolation = isolated === null || isolated === entry.name;
 
       entry.mesh.visible = inGroup && allowedByIsolation;
-      const wanted = active ? materials.highlight : materials.base;
+      const wanted = active ? materials.highlight : entry.base;
       if (entry.mesh.material !== wanted) entry.mesh.material = wanted;
     }
   }, [entries, hovered, selected, visible, isolated, materials, accent]);
@@ -527,12 +620,21 @@ export default function AnatomicalOrganViewer({
             <Canvas
               camera={{ position: [0, 0, 4], fov: 42, near: 0.01, far: 1000 }}
               dpr={[1, 2]}
-              gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+              gl={{
+                antialias: true,
+                alpha: true,
+                powerPreference: 'high-performance',
+                // Filmic tone mapping keeps the specular highlights of wet
+                // tissue from clipping to white at this light intensity.
+                toneMapping: THREE.ACESFilmicToneMapping,
+                toneMappingExposure: 1.0,
+              }}
             >
-              <ambientLight intensity={0.9} />
-              <hemisphereLight intensity={0.45} groundColor="#e2e8f0" color="#ffffff" />
-              <directionalLight position={[4, 6, 5]} intensity={1.6} />
-              <directionalLight position={[-5, -2, -4]} intensity={0.5} color="#93c5fd" />
+              <StudioEnvironment intensity={0.55} />
+              <ambientLight intensity={0.55} />
+              <hemisphereLight intensity={0.35} groundColor="#e2e8f0" color="#ffffff" />
+              <directionalLight position={[4, 6, 5]} intensity={1.35} />
+              <directionalLight position={[-5, -2, -4]} intensity={0.45} color="#93c5fd" />
               <pointLight position={[0, 1.6, 3]} intensity={0.35} />
               <Suspense fallback={null}>
                 <OrganScene
