@@ -75,9 +75,10 @@ code alone.
 
 ## Not verified / out of scope
 
-- **Cloudflare deployment is pending operator action.** The `wrangler` token is
-  not present in this environment, so the live site is one build behind. The
-  exact deploy command is in the handoff below.
+- **No manual Cloudflare deploy step exists — deployment is automatic.**
+  Cloudflare Workers Builds is connected to the GitHub repo and deploys `main`
+  on push. There is no local `wrangler` token on this host, and none is needed.
+  See "Live deployment" below for the evidence.
 - **No automated browser test suite.** Verification was performed with scripted
   browser sessions and recorded measurements, not committed as CI. The
   reproducible gates are `npm run verify` (anatomy, coverage, invariants, types)
@@ -96,22 +97,50 @@ code alone.
 - **Route guarding is a demo boundary.** Enforced in the browser with demo
   credentials shipped in the bundle; it separates roles, it does not secure data.
 
-## Deploy handoff
+## Live deployment
 
-```bash
-cd /home/mahir-linux/Development/star-plus
-npm run build                              # already built; out/ is current
-CLOUDFLARE_API_TOKEN=<your-token> npx wrangler deploy
+Deployment is **automatic**. Cloudflare Workers Builds is connected to
+`ariandesu/star-plus` and deploys `main` on every push. No local `wrangler`
+token exists on this host and none is needed — do not go looking for one.
+
+Evidence from the GitHub check-run API, not from prose:
+
+```
+3f3a70bd  docs: record verification ...    Workers Builds: star-plus -> success
+98c23e0e  fix(viewer): share materials ... Workers Builds: star-plus -> success
+f6e4f720  feat(anatomy): real licensed ...  (no check run - predates the connection)
 ```
 
-Then confirm the live chunk matches the local build:
+`f6e4f720` having no check run is what produced the earlier wrong reading that
+"the live site is one build behind". It is not. The live bundle matches the
+local build.
+
+### Verifying a deploy landed
+
+Chunk **filenames** legitimately differ between a local build and the Workers
+build, because Next.js emits build-environment-specific webpack module ids. So
+do not compare filenames:
 
 ```bash
 curl -s https://star-plus.shareflow.workers.dev/astronaut/ \
   | grep -oE '/_next/static/chunks/app/astronaut/[A-Za-z0-9_.-]+\.js'
 grep -oE '/_next/static/chunks/app/astronaut/[A-Za-z0-9_.-]+\.js' out/astronaut/index.html
+# ^ these WILL differ. That is not evidence of a stale deploy.
 ```
 
-The two hashes must be identical. A GitHub push does **not** trigger a deploy —
-verified: the live chunk hash stayed `page-cfebe752de28b746.js` while the local
-build produced `page-1f01c12b625af900.js`.
+Compare bytes instead:
+
+```bash
+# viewer chunk - must be byte-identical
+curl -s https://star-plus.shareflow.workers.dev/_next/static/chunks/256.a4c3f20040c71713.js | sha256sum
+sha256sum out/_next/static/chunks/256.a4c3f20040c71713.js
+
+# organ assets - same size and sha256 as the local files
+curl -sI https://star-plus.shareflow.workers.dev/models/organs/VH_M_Heart.glb
+```
+
+Last verified live on 2026-09-26: the viewer chunk `256` sha256
+`d341a02df60d7f3e8b3ccb270c1d02ed…` is identical to the local HEAD build at
+`3f3a70bd`, all seven organ GLBs are served at their exact local byte sizes, and
+the live page and local page chunks share an identical set of 300 string
+literals (symmetric difference 0) — same source, different build environment.

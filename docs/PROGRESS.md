@@ -136,6 +136,27 @@ gland name and excludes muscle/cartilage explicitly.
    filled 4.7% of the viewport at whole-heart framing. Isolation now re-frames
    the camera and rewrites the orbit distance limits (**54.9%** measured).
 
+## Live deployment
+
+**Deployment is automatic.** Cloudflare Workers Builds is connected to the
+GitHub repo `ariandesu/star-plus` and deploys `main` on every push. There is no
+local `wrangler` token on this host, and none is needed.
+
+Verified on 2026-09-26 against `https://star-plus.shareflow.workers.dev`:
+
+| Check | Result |
+|---|---|
+| GitHub check-runs on `3f3a70bd` and `98c23e0e` | `Workers Builds: star-plus` → **success** |
+| Viewer chunk `256` sha256, live vs local HEAD | **identical** (`d341a02df60d7f3e…`) |
+| All seven organ GLBs, live vs local byte sizes | **identical** |
+| Page chunk string literals, live vs local | 300 vs 300, symmetric difference **0** |
+| Live login (`astronaut01`) → `/astronaut` + 3D canvas | pass |
+| Live system sweep: Heart 14, Lungs 67, Brain 283, Bones 246, Sleep 12 | pass, zero console errors |
+
+Chunk *filenames* differ between a local and a Workers build (Next.js emits
+build-environment-specific webpack module ids), so filename comparison is not a
+valid staleness test. Compare bytes — see `docs/CHECKLIST.md`.
+
 ## Honest limitations
 
 - Metrics, missions and crew are **simulated demonstration data**, not telemetry.
