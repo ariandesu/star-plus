@@ -31,7 +31,7 @@ interface HeaderBarProps {
 export default function HeaderBar({
   session,
   pageTitle,
-  selectedAstronautId = 'ast-01',
+  selectedAstronautId = 'maya-chen',
   onAstronautChange,
   onSearchClick,
   onNotificationClick,
@@ -45,7 +45,7 @@ export default function HeaderBar({
   const user = session || {
     username: 'CDR Maya Chen',
     role: pathname === '/medical' ? 'FLIGHT MEDICAL OFFICER' : pathname === '/mission-control' ? 'MISSION CONTROL' : 'ASTRONAUT',
-    id: 'ast-01'
+    id: 'maya-chen'
   };
 
   const handleRoleNavigate = (targetPath: string) => {

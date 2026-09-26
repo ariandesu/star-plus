@@ -31,7 +31,7 @@ import {
 
 export default function AstronautDashboard() {
   const [session, setSession] = useState<UserSession | null>(null);
-  const [selectedAstronautId, setSelectedAstronautId] = useState<string>('ast-01');
+  const [selectedAstronautId, setSelectedAstronautId] = useState<string>('maya-chen');
   const [selectedMetric, setSelectedMetric] = useState<HealthMetricDetail | null>(null);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -44,7 +44,7 @@ export default function AstronautDashboard() {
     if (s) setSession(s);
   }, []);
 
-  const astronaut = healthService.getAstronautById(selectedAstronautId) || healthService.getAstronautById('ast-01');
+  const astronaut = healthService.getAstronautById(selectedAstronautId) || healthService.getAstronautById('maya-chen');
   const metrics = healthService.getAstronautMetrics(selectedAstronautId);
   const alerts = alertService.getAlerts();
 
