@@ -1,10 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import TopHeader from '../../components/TopHeader';
-import BodyPartsOrganScene, { HealthSystemType } from '../../components/three/BodyPartsOrganScene';
-import AnalysisModal from '../../components/AnalysisModal';
-import MetricDetailModal from '../../components/MetricDetailModal';
+import dynamic from 'next/dynamic';
+import TopHeader from '@/components/TopHeader';
+import RouteGuard from '@/components/RouteGuard';
+import AnalysisModal from '@/components/AnalysisModal';
+import MetricDetailModal from '@/components/MetricDetailModal';
+import type { OrganSystemKey } from '@/services/organHealthService';
+import { ORGAN_SYSTEM_ACCENT } from '@/services/organHealthService';
+
+const AnatomicalOrganViewer = dynamic(
+  () => import('@/components/three/AnatomicalOrganViewer'),
+  { ssr: false }
+);
 import { MOCK_ASTRONAUTS, MOCK_ALERTS, MAYA_ANALYSIS_SIGNAL } from '../../data/mockData';
 import { authService } from '../../services/authService';
 import { analysisService } from '../../services/analysisService';
@@ -19,7 +27,7 @@ import {
 export default function MedicalPage() {
   const [session, setSession] = useState<any>(null);
   const [selectedAstronautId, setSelectedAstronautId] = useState<string>('maya-chen');
-  const [selectedSystem, setSelectedSystem] = useState<HealthSystemType>('CARDIOVASCULAR');
+  const [selectedSystem, setSelectedSystem] = useState<OrganSystemKey>('CARDIOVASCULAR');
   const [timeHorizon, setTimeHorizon] = useState<'24H' | '7D' | '30D'>('24H');
   const [alerts, setAlerts] = useState(MOCK_ALERTS);
   const [clinicalNotes, setClinicalNotes] = useState<Record<string, string>>({
@@ -86,7 +94,8 @@ export default function MedicalPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F4F7FC] text-slate-900 font-sans flex flex-col">
+    <RouteGuard allow={['medical', 'mission-control']}>
+      <div className="min-h-screen bg-[#F4F7FC] text-slate-900 font-sans flex flex-col">
       
       {/* Top Header matching reference layout */}
       <TopHeader
@@ -162,13 +171,14 @@ export default function MedicalPage() {
             {/* ========================================================= */}
             <div className="lg:col-span-5 space-y-4">
               
-              {/* Three.js BodyParts3D 3D Health Visualizer */}
-              <BodyPartsOrganScene
-                selectedSystem={selectedSystem}
-                onSelectSystem={(sys: HealthSystemType) => setSelectedSystem(sys)}
-                astronautName={currentAstronaut.name}
-                status={currentAstronaut.status as any}
-              />
+              {/* Real reference-organ anatomy viewer (HRA / BodyParts3D) */}
+              <div className="h-[520px] min-h-[420px]">
+                <AnatomicalOrganViewer
+                  system={selectedSystem}
+                  onSelectSystem={setSelectedSystem}
+                  accent={ORGAN_SYSTEM_ACCENT[selectedSystem]}
+                />
+              </div>
 
               {/* Crew Roster Quick Target Selector */}
               <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
@@ -488,6 +498,8 @@ export default function MedicalPage() {
         />
       )}
 
-    </div>
+      </div>
+
+    </RouteGuard>
   );
 }

@@ -62,7 +62,6 @@ export default function AnalysisModal({ signal, isOpen, onClose, onActionToggled
               <p className="text-xs mt-0.5 leading-relaxed">{signal.summary}</p>
             </div>
           </div>
-
           {/* Biomarker Deviations Table */}
           <div>
             <h3 className="text-sm font-extrabold text-star-navy mb-3 flex items-center justify-between">

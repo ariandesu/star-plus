@@ -1,5 +1,7 @@
 'use client';
 
+import RouteGuard from '@/components/RouteGuard';
+
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../../components/TopHeader';
 import MissionEnvironmentScene from '../../components/three/MissionEnvironmentScene';
@@ -68,7 +70,8 @@ export default function MissionControlDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F4F7FC] text-slate-900 font-sans flex flex-col">
+    <RouteGuard allow={['mission-control']}>
+      <div className="min-h-screen bg-[#F4F7FC] text-slate-900 font-sans flex flex-col">
       
       {/* Top Header Bar matching Dribbble reference */}
       <TopHeader
@@ -270,6 +273,8 @@ export default function MissionControlDashboard() {
         />
       )}
 
-    </div>
+      </div>
+
+    </RouteGuard>
   );
 }
