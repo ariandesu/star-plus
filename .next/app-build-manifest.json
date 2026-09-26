@@ -1,0 +1,61 @@
+{
+  "pages": {
+    "/_not-found/page": [
+      "static/chunks/webpack-e08da262b32814b6.js",
+      "static/chunks/fd9d1056-1f97e628f0d48976.js",
+      "static/chunks/117-d56898f51b06351b.js",
+      "static/chunks/main-app-3cb2d9b1f3f2168f.js",
+      "static/chunks/app/_not-found/page-4969782cadfffabb.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack-e08da262b32814b6.js",
+      "static/chunks/fd9d1056-1f97e628f0d48976.js",
+      "static/chunks/117-d56898f51b06351b.js",
+      "static/chunks/main-app-3cb2d9b1f3f2168f.js",
+      "static/css/c1f69f430afdf44f.css",
+      "static/chunks/app/layout-8b3ffc1ae90d9a1c.js"
+    ],
+    "/astronaut/page": [
+      "static/chunks/webpack-e08da262b32814b6.js",
+      "static/chunks/fd9d1056-1f97e628f0d48976.js",
+      "static/chunks/117-d56898f51b06351b.js",
+      "static/chunks/main-app-3cb2d9b1f3f2168f.js",
+      "static/chunks/348-42c02e40d8dc5743.js",
+      "static/chunks/709-bf1ae2acf315d344.js",
+      "static/chunks/804-403e9afc21e79773.js",
+      "static/chunks/440-80593f8cac819530.js",
+      "static/chunks/724-6286cff4c3e553e1.js",
+      "static/chunks/app/astronaut/page-a5034bebc4201ca5.js"
+    ],
+    "/medical/page": [
+      "static/chunks/webpack-e08da262b32814b6.js",
+      "static/chunks/fd9d1056-1f97e628f0d48976.js",
+      "static/chunks/117-d56898f51b06351b.js",
+      "static/chunks/main-app-3cb2d9b1f3f2168f.js",
+      "static/chunks/348-42c02e40d8dc5743.js",
+      "static/chunks/709-bf1ae2acf315d344.js",
+      "static/chunks/804-403e9afc21e79773.js",
+      "static/chunks/440-80593f8cac819530.js",
+      "static/chunks/724-6286cff4c3e553e1.js",
+      "static/chunks/app/medical/page-e360724e92170468.js"
+    ],
+    "/mission-control/page": [
+      "static/chunks/webpack-e08da262b32814b6.js",
+      "static/chunks/fd9d1056-1f97e628f0d48976.js",
+      "static/chunks/117-d56898f51b06351b.js",
+      "static/chunks/main-app-3cb2d9b1f3f2168f.js",
+      "static/chunks/348-42c02e40d8dc5743.js",
+      "static/chunks/804-403e9afc21e79773.js",
+      "static/chunks/440-80593f8cac819530.js",
+      "static/chunks/app/mission-control/page-2faca61c2571ed37.js"
+    ],
+    "/page": [
+      "static/chunks/webpack-e08da262b32814b6.js",
+      "static/chunks/fd9d1056-1f97e628f0d48976.js",
+      "static/chunks/117-d56898f51b06351b.js",
+      "static/chunks/main-app-3cb2d9b1f3f2168f.js",
+      "static/chunks/804-403e9afc21e79773.js",
+      "static/chunks/app/page-3981d092fcfd6d43.js"
+    ]
+  }
+}
