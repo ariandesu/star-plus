@@ -7,7 +7,12 @@
     "build": "next build",
     "deploy": "wrangler deploy",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "verify:anatomy": "python3 scripts/validate-anatomy.py",
+    "verify:coverage": "python3 scripts/verify-anatomy-coverage.py",
+    "verify:invariants": "node scripts/test-catalog-and-metrics.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify": "npm run verify:anatomy && npm run verify:coverage && npm run verify:invariants && npm run typecheck"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",

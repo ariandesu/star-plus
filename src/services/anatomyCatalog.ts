@@ -392,6 +392,14 @@ export const ORGAN_DEFINITIONS: Record<OrganSystemKey, OrganDefinition> = {
         description:
           'Pelvis, thigh, knee, ankle and foot. The femur and tibia carry the highest axial loads in the countermeasure schedule.',
       },
+      {
+        id: 'other',
+        label: 'Other Structures',
+        isCatchAll: true,
+        match: [],
+        description:
+          'Remaining structures in this model that are not part of the primary skeletal groups.',
+      },
     ],
   },
 

@@ -53,7 +53,6 @@ import {
 } from 'lucide-react';
 
 const BASE_COLOR = '#cf7a5c';
-const BASE_OPACITY = 1;
 
 interface AnatomicalOrganViewerProps {
   system: OrganSystemKey;
@@ -68,12 +67,45 @@ interface StructureEntry {
   mesh: THREE.Mesh;
   /** Raw glTF node name identifying the anatomical structure. */
   name: string;
-  material: THREE.MeshStandardMaterial;
 }
 
 /**
- * Walk a loaded glTF graph and pair each mesh with its structure name and a
- * dedicated material instance that this component owns and disposes.
+ * Shared materials for the whole scene.
+ *
+ * Every structure uses the same base material and only the active structure is
+ * switched to the highlight material. Per-mesh materials would mean one shader
+ * program and one draw call per structure — with 246 skeleton meshes that is
+ * 246 programs, which is enough to stall the main thread while they compile.
+ * Sharing keeps the program count at two regardless of model complexity.
+ *
+ * Materials are deliberately opaque: a transparent base would push every
+ * structure into the depth-sorted transparent pass. Visibility is driven by
+ * `mesh.visible`, not by opacity.
+ */
+function createMaterials(): {
+  base: THREE.MeshStandardMaterial;
+  highlight: THREE.MeshStandardMaterial;
+} {
+  const base = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(BASE_COLOR),
+    roughness: 0.6,
+    metalness: 0.04,
+    // Reference meshes from these sources are not guaranteed to have consistent
+    // winding, so both faces are drawn.
+    side: THREE.DoubleSide,
+  });
+  const highlight = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(BASE_COLOR),
+    roughness: 0.5,
+    metalness: 0.05,
+    side: THREE.DoubleSide,
+    emissive: new THREE.Color(0x000000),
+  });
+  return { base, highlight };
+}
+
+/**
+ * Walk a loaded glTF graph and pair each mesh with its structure name.
  *
  * Some exporters name only the parent node, so a mesh with an empty name
  * inherits the nearest named ancestor.
@@ -87,22 +119,9 @@ function collectStructures(root: THREE.Object3D): StructureEntry[] {
     if (name) inherited.set(obj, name);
     const mesh = obj as THREE.Mesh;
     if (!mesh.isMesh || !mesh.geometry) return;
-    const material = new THREE.MeshStandardMaterial({
-      color: new THREE.Color(BASE_COLOR),
-      roughness: 0.6,
-      metalness: 0.04,
-      side: THREE.DoubleSide,
-      transparent: true,
-      opacity: BASE_OPACITY,
-    });
-    // Release whatever material arrived with the file.
-    const original = mesh.material;
-    if (Array.isArray(original)) original.forEach((m) => m.dispose?.());
-    else original?.dispose?.();
-    mesh.material = material;
     mesh.castShadow = false;
     mesh.receiveShadow = false;
-    entries.push({ mesh, name: name || 'structure', material });
+    entries.push({ mesh, name: name || 'structure' });
   });
 
   return entries;
@@ -161,8 +180,9 @@ function OrganScene({
   const controlsRef = useRef<any>(null);
 
   const [entries, setEntries] = useState<StructureEntry[]>([]);
+  const materials = useMemo(() => createMaterials(), []);
 
-  // Adopt the loaded graph once per model: build materials, then measure.
+  // Adopt the loaded graph once per model, then measure and frame it.
   useEffect(() => {
     const root = gltf.scene;
     const collected = collectStructures(root);
@@ -187,11 +207,17 @@ function OrganScene({
       controls.update();
     }
 
-    return () => {
-      collected.forEach((entry) => entry.material.dispose());
-      setEntries([]);
-    };
+    return () => setEntries([]);
   }, [gltf, camera, system, onStructures]);
+
+  // Dispose the shared materials when the viewer unmounts.
+  useEffect(
+    () => () => {
+      materials.base.dispose();
+      materials.highlight.dispose();
+    },
+    [materials]
+  );
 
   // Orbit target must track the model even before controls exist.
   useEffect(() => {
@@ -203,37 +229,39 @@ function OrganScene({
 
   // Apply highlight, isolation and group filtering.
   useEffect(() => {
+    const highlightColor = new THREE.Color(accent);
+    materials.highlight.color.copy(highlightColor);
+    materials.highlight.emissive.copy(highlightColor).multiplyScalar(0.3);
+
     for (const entry of entries) {
-      const isHovered = hovered === entry.name;
-      const isSelected = selected === entry.name;
-      const active = isHovered || isSelected;
+      const active = entry.name === hovered || entry.name === selected;
       const inGroup = visible === null || visible.has(entry.name);
       const allowedByIsolation = isolated === null || isolated === entry.name;
 
       entry.mesh.visible = inGroup && allowedByIsolation;
-      entry.material.color.set(active ? accent : BASE_COLOR);
-      entry.material.emissive.set(active ? new THREE.Color(accent).multiplyScalar(0.3) : 0x000000);
-      entry.material.opacity = entry.mesh.visible ? BASE_OPACITY : 0;
-      entry.material.depthWrite = entry.mesh.visible;
+      const wanted = active ? materials.highlight : materials.base;
+      if (entry.mesh.material !== wanted) entry.mesh.material = wanted;
     }
-  }, [entries, hovered, selected, visible, isolated, accent]);
+  }, [entries, hovered, selected, visible, isolated, materials, accent]);
 
   // Gentle pulse on the active structure only.
-  const pulseRef = useRef(0);
   useEffect(() => {
     if (reducedMotion) return;
+    const activeMeshes = entries.filter((e) => e.name === hovered || e.name === selected);
+    if (!activeMeshes.length) return;
     let raf = 0;
+    let t = 0;
     const tick = () => {
-      pulseRef.current += 1;
-      const scale = 1 + Math.sin(pulseRef.current / 24) * 0.006;
-      for (const entry of entries) {
-        if (entry.name === hovered || entry.name === selected) entry.mesh.scale.setScalar(scale);
-        else if (entry.mesh.scale.x !== 1) entry.mesh.scale.setScalar(1);
-      }
+      t += 1;
+      const scale = 1 + Math.sin(t / 24) * 0.006;
+      activeMeshes.forEach((e) => e.mesh.scale.setScalar(scale));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      activeMeshes.forEach((e) => e.mesh.scale.setScalar(1));
+    };
   }, [entries, hovered, selected, reducedMotion]);
 
   /**
@@ -390,20 +418,22 @@ export default function AnatomicalOrganViewer({
   const [isolated, setIsolated] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
-  const [activeGroup, setActiveGroup] = useState<string | null>(definition.defaultGroup);
+  const [activeGroup, setActiveGroup] = useState<string | null>(null);
   const [resetToken, setResetToken] = useState(0);
   const [zoomCommand, setZoomCommand] = useState<{ direction: 'in' | 'out'; token: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [names, setNames] = useState<string[]>([]);
 
-  // Reset per-system structure state.
+  // Reset per-system structure state. The group filter starts cleared so a
+  // newly opened system always shows the complete organ; groups are an
+  // optional filter the user opts into, never a default that hides anatomy.
   useEffect(() => {
     setSelected(null);
     setHovered(null);
     setError(null);
     setNames([]);
     setIsolated(null);
-    setActiveGroup(ORGAN_DEFINITIONS[system].defaultGroup);
+    setActiveGroup(null);
   }, [system]);
 
   const groups = useMemo(() => partitionStructures(definition, names), [definition, names]);
@@ -414,6 +444,16 @@ export default function AnatomicalOrganViewer({
     if (!list || !list.length) return null;
     return new Set(list);
   }, [activeGroup, groups]);
+
+  /**
+   * Structures listed for selection. With no group filter this is every loaded
+   * structure in the model, so any anatomical part is reachable directly
+   * without first having to guess which group contains it.
+   */
+  const structureList = useMemo(
+    () => (activeGroup ? groups[activeGroup] ?? [] : names),
+    [activeGroup, groups, names]
+  );
 
   const handleStructures = useCallback((next: string[]) => {
     if (!next.length) {
@@ -603,9 +643,9 @@ export default function AnatomicalOrganViewer({
             )}
 
             <div className="max-h-28 overflow-y-auto rounded-lg border border-slate-100 bg-slate-50/60 p-1.5">
-              {activeGroup ? (
+              {structureList.length > 0 ? (
                 <ul className="flex flex-wrap gap-1">
-                  {(groups[activeGroup] ?? []).map((raw) => {
+                  {structureList.map((raw) => {
                     const isSel = selected === raw;
                     return (
                       <li key={raw}>
@@ -628,7 +668,7 @@ export default function AnatomicalOrganViewer({
                 </ul>
               ) : (
                 <p className="flex items-center gap-1 px-1 py-0.5 text-[10px] text-slate-400">
-                  <Eye className="h-3 w-3" /> Select a group to list its structures.
+                  <Eye className="h-3 w-3" /> No structures loaded.
                 </p>
               )}
             </div>
