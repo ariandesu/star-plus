@@ -5,6 +5,8 @@ import Sidebar from '../../components/Sidebar';
 import HeaderBar from '../../components/HeaderBar';
 import MetricDetailModal from '../../components/MetricDetailModal';
 import AnalysisModal from '../../components/AnalysisModal';
+import GlobalSearchModal from '../../components/GlobalSearchModal';
+import NotificationModal from '../../components/NotificationModal';
 import { healthService } from '../../services/healthService';
 import { alertService } from '../../services/alertService';
 import { analysisService } from '../../services/analysisService';
@@ -23,28 +25,34 @@ import {
   ArrowUpRight,
   TrendingUp,
   FileText,
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react';
 
 export default function AstronautDashboard() {
   const [session, setSession] = useState<UserSession | null>(null);
+  const [selectedAstronautId, setSelectedAstronautId] = useState<string>('ast-01');
   const [selectedMetric, setSelectedMetric] = useState<HealthMetricDetail | null>(null);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('Overview');
 
   useEffect(() => {
     const s = authService.getSession();
     if (s) setSession(s);
   }, []);
 
-  const astronaut = healthService.getAstronautById('ast-01');
-  const metrics = healthService.getAstronautMetrics('ast-01');
+  const astronaut = healthService.getAstronautById(selectedAstronautId) || healthService.getAstronautById('ast-01');
+  const metrics = healthService.getAstronautMetrics(selectedAstronautId);
   const alerts = alertService.getAlerts();
 
   if (!astronaut) return null;
 
-  const hrMetric = metrics.find(m => m.id === 'm-hr');
-  const sleepMetric = metrics.find(m => m.id === 'm-sleep');
-  const radMetric = metrics.find(m => m.id === 'm-rad');
+  const hrMetric = metrics.find(m => m.id.includes('hr'));
+  const sleepMetric = metrics.find(m => m.id.includes('sleep'));
+  const radMetric = metrics.find(m => m.id.includes('rad'));
 
   const domainScores = [
     { name: 'Cardiovascular', score: 92, color: 'bg-emerald-500' },
@@ -56,37 +64,48 @@ export default function AstronautDashboard() {
     { name: 'Radiation Protection', score: 82, color: 'bg-emerald-500' },
   ];
 
+  const domainTabs = ['Overview', 'Cardiovascular', 'Sleep & Circadian', 'Cognitive & Stress', 'Musculoskeletal', 'Radiation'];
+
   return (
-    <div className="flex h-screen bg-[#F4F7FC] text-slate-900 overflow-hidden">
+    <div className="flex h-screen bg-[#F4F7FC] text-slate-900 overflow-hidden font-sans">
       {/* Left Sidebar */}
-      <Sidebar />
+      <Sidebar isMobileOpen={isMobileOpen} onCloseMobile={() => setIsMobileOpen(false)} />
 
       {/* Main Content View */}
       <div className="flex-1 flex flex-col h-screen overflow-y-auto">
-        <HeaderBar session={session} pageTitle="Astronaut Personal Health Portal" />
+        <HeaderBar
+          session={session}
+          pageTitle={`Astronaut Personal Health Portal — ${astronaut.name}`}
+          selectedAstronautId={selectedAstronautId}
+          onAstronautChange={(id) => setSelectedAstronautId(id)}
+          onSearchClick={() => setIsSearchOpen(true)}
+          onNotificationClick={() => setIsNotificationOpen(true)}
+          onToggleMobileMenu={() => setIsMobileOpen(true)}
+        />
 
-        <main className="p-6 space-y-6 max-w-[1600px] mx-auto w-full">
-          {/* Top Welcome & Mission Banner */}
-          <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <main className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1600px] mx-auto w-full">
+          
+          {/* Top Welcome Banner */}
+          <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-100 text-blue-700">
-                  COMMANDER • CDR
+                  {astronaut.role}
                 </span>
                 <span className="text-xs font-bold text-slate-400">Mission Day 147</span>
               </div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight mt-1">
-                Astronaut Health Telemetry — {astronaut.name}
+              <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-1">
+                Biometric Status — {astronaut.name}
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
-                Real-time personal biometric status, 72-hour vital trends, and daily workout protocols.
+                Real-time physiological telemetry, 72-hour vital trends, and daily workout protocols.
               </p>
             </div>
 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsAnalysisOpen(true)}
-                className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 transition flex items-center gap-2"
+                className="px-4 py-2.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-extrabold text-xs shadow-md shadow-blue-500/20 transition flex items-center gap-2 cursor-pointer"
               >
                 <Activity className="w-4 h-4" />
                 <span>Run Biomarker Diagnostics</span>
@@ -94,136 +113,172 @@ export default function AstronautDashboard() {
             </div>
           </div>
 
-          {/* Top KPI Cards Grid (5 Panels) */}
+          {/* Domain Category Filter Tabs */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {domainTabs.map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-2xl text-xs font-extrabold whitespace-nowrap transition-all duration-200 ${
+                  activeTab === tab
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'bg-white/80 backdrop-blur-md border border-slate-200/60 text-slate-600 hover:text-slate-900 hover:bg-white'
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          {/* Top KPI Cards Grid (5 Glassmorphic Panels) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            
             {/* Health Score Panel */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Overall Score</span>
-                <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Overall Score</span>
+                <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
                   <Shield className="w-4 h-4" />
                 </div>
               </div>
-              <div className="my-2">
-                <div className="text-3xl font-extrabold text-slate-900">84 <span className="text-xs font-semibold text-slate-400">/ 100</span></div>
+              <div className="my-3">
+                <div className="text-3xl font-black text-slate-900">84 <span className="text-xs font-bold text-slate-400">/ 100</span></div>
                 <div className="w-full bg-slate-100 h-2 rounded-full mt-2 overflow-hidden">
                   <div className="bg-blue-600 h-2 rounded-full" style={{ width: '84%' }} />
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-emerald-600">● 100% Mission Ready</span>
+              <span className="text-[10px] font-extrabold text-emerald-600 flex items-center gap-1">
+                ● 100% Mission Ready
+              </span>
             </div>
 
             {/* Heart Rate Panel */}
             <div
               onClick={() => hrMetric && setSelectedMetric(hrMetric)}
-              className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs cursor-pointer hover:border-blue-300 transition flex flex-col justify-between"
+              className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-sm cursor-pointer hover:border-blue-300 hover:shadow-md transition flex flex-col justify-between group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Heart Rate</span>
-                <div className="w-7 h-7 rounded-lg bg-rose-50 text-rose-500 flex items-center justify-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Heart Rate</span>
+                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center group-hover:scale-110 transition">
                   <Heart className="w-4 h-4" />
                 </div>
               </div>
-              <div className="my-2">
-                <div className="text-3xl font-extrabold text-slate-900">68 <span className="text-xs font-semibold text-slate-400">bpm</span></div>
-                <span className="text-[11px] text-slate-500 font-medium">Baseline: 62 bpm</span>
+              <div className="my-3">
+                <div className="text-3xl font-black text-slate-900">68 <span className="text-xs font-bold text-slate-400">bpm</span></div>
+                <p className="text-[10px] text-slate-500 mt-1">Resting Baseline: 64 bpm</p>
               </div>
-              <span className="text-[10px] font-bold text-emerald-600">● Nominal Range</span>
+              <span className="text-[10px] font-bold text-slate-400 group-hover:text-blue-600 transition flex items-center gap-1">
+                Click for Vital History →
+              </span>
             </div>
 
             {/* Sleep Load Panel */}
             <div
               onClick={() => sleepMetric && setSelectedMetric(sleepMetric)}
-              className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs cursor-pointer hover:border-blue-300 transition flex flex-col justify-between"
+              className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-sm cursor-pointer hover:border-blue-300 hover:shadow-md transition flex flex-col justify-between group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Sleep Load</span>
-                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Sleep Load</span>
+                <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition">
                   <Moon className="w-4 h-4" />
                 </div>
               </div>
-              <div className="my-2">
-                <div className="text-3xl font-extrabold text-slate-900">7.2 <span className="text-xs font-semibold text-slate-400">hrs</span></div>
-                <span className="text-[11px] text-slate-500 font-medium">Efficiency: 88%</span>
+              <div className="my-3">
+                <div className="text-3xl font-black text-slate-900">7.2h <span className="text-xs font-bold text-amber-500">88%</span></div>
+                <p className="text-[10px] text-slate-500 mt-1">REM: 1.8h • Deep: 2.1h</p>
               </div>
-              <span className="text-[10px] font-bold text-amber-600">● Below Target (8h)</span>
+              <span className="text-[10px] font-bold text-amber-600">● Moderate Circadian Shift</span>
             </div>
 
-            {/* Radiation Panel */}
+            {/* Radiation Accumulation Panel */}
             <div
               onClick={() => radMetric && setSelectedMetric(radMetric)}
-              className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs cursor-pointer hover:border-blue-300 transition flex flex-col justify-between"
+              className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-sm cursor-pointer hover:border-blue-300 hover:shadow-md transition flex flex-col justify-between group"
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Radiation</span>
-                <div className="w-7 h-7 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Radiation Dosimetry</span>
+                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center group-hover:scale-110 transition">
                   <Sun className="w-4 h-4" />
                 </div>
               </div>
-              <div className="my-2">
-                <div className="text-3xl font-extrabold text-slate-900">12.4 <span className="text-xs font-semibold text-slate-400">mSv</span></div>
-                <span className="text-[11px] text-slate-500 font-medium">Safe Limit: 50 mSv</span>
+              <div className="my-3">
+                <div className="text-3xl font-black text-slate-900">12.4 <span className="text-xs font-bold text-slate-400">mSv</span></div>
+                <p className="text-[10px] text-slate-500 mt-1">Safe Limit: 50 mSv / yr</p>
               </div>
-              <span className="text-[10px] font-bold text-emerald-600">● Within Safe Threshold</span>
+              <span className="text-[10px] font-bold text-emerald-600">● Safe Dosage Zone</span>
             </div>
 
-            {/* Interventions Panel */}
-            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs flex flex-col justify-between">
+            {/* Active Interventions Panel */}
+            <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">Active Protocol</span>
-                <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                  <FileText className="w-4 h-4" />
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Active Protocol</span>
+                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <Dumbbell className="w-4 h-4" />
                 </div>
               </div>
-              <div className="my-2">
-                <div className="text-3xl font-extrabold text-slate-900">1 <span className="text-xs font-semibold text-slate-400">Active</span></div>
-                <span className="text-[11px] text-slate-500 font-medium">Prescribed Rest Protocol</span>
+              <div className="my-3">
+                <div className="text-lg font-black text-slate-900">ARED Resistance</div>
+                <p className="text-[10px] text-slate-500 mt-0.5">Scheduled at 15:30 UTC</p>
               </div>
-              <span className="text-[10px] font-bold text-blue-600">● In Progress</span>
+              <span className="text-[10px] font-extrabold text-blue-600">1 Rest Window Active</span>
             </div>
+
           </div>
 
-          {/* Main 2-Column Layout Grid */}
+          {/* Main 2-Column Dashboard Body */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Left Column (2 Span) */}
+            {/* Left Main Column (2 Spans) */}
             <div className="lg:col-span-2 space-y-6">
               
-              {/* 72-Hour Vital Trends Chart Panel */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
-                <div className="flex items-center justify-between mb-4">
+              {/* Vital Biomarkers Grid */}
+              <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">72-Hour Vital Trends Diagnostics</h3>
-                    <p className="text-xs text-slate-500">Continuous telemetry of Heart Rate (bpm) & SpO₂ (%)</p>
+                    <h3 className="text-base font-black text-slate-900">Vital Biomarkers Grid</h3>
+                    <p className="text-xs text-slate-500">Real-time status metrics across physiological domains.</p>
                   </div>
-                  <div className="flex items-center gap-4 text-xs font-bold">
-                    <span className="flex items-center gap-1 text-blue-600">● Heart Rate</span>
-                    <span className="flex items-center gap-1 text-emerald-600">● SpO₂ Oxygen</span>
-                  </div>
+                  <button
+                    onClick={() => setIsAnalysisOpen(true)}
+                    className="text-xs font-extrabold text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <span>Full Biomarker Report</span>
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
-                {/* Visual Chart Graphic Representation */}
-                <div className="h-56 w-full bg-slate-50/70 border border-slate-100 rounded-xl p-4 flex flex-col justify-between relative overflow-hidden">
-                  <div className="w-full h-full flex items-end justify-between gap-2 pt-4 pb-2 px-2">
-                    {[62, 65, 64, 68, 72, 70, 68, 66, 69, 74, 71, 68].map((val, idx) => (
-                      <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
-                        <div
-                          className="w-full bg-blue-500/80 rounded-t-md hover:bg-blue-600 transition-all"
-                          style={{ height: `${(val / 100) * 100}%` }}
-                          title={`HR: ${val} bpm`}
-                        />
-                        <span className="text-[9px] font-bold text-slate-400">{idx * 6}h</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {metrics.map((m) => (
+                    <div
+                      key={m.id}
+                      onClick={() => setSelectedMetric(m)}
+                      className="p-4 rounded-2xl bg-slate-50/70 border border-slate-200/70 hover:border-blue-300 hover:bg-blue-50/30 transition cursor-pointer flex items-center justify-between"
+                    >
+                      <div>
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Biomarker</span>
+                        <h4 className="text-xs font-bold text-slate-900">{m.name}</h4>
+                        <div className="text-lg font-black text-slate-900 mt-1">
+                          {m.currentValue} <span className="text-xs font-normal text-slate-500">{m.unit}</span>
+                        </div>
                       </div>
-                    ))}
-                  </div>
+                      <div className="text-right">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          m.status === 'WATCH' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {m.status}
+                        </span>
+                        <p className="text-[10px] text-slate-400 mt-2 font-mono">Baseline: {m.baselineValue}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Biomarker Domain Status List */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-slate-900">Health Domain Index</h3>
-                  <span className="text-xs font-semibold text-slate-400">Individual Baseline Standard</span>
+              {/* Health Domain Index Breakdown */}
+              <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-black text-slate-900">Health Domain Performance Index</h3>
+                  <span className="text-xs font-bold text-slate-400">Baseline Target: 100</span>
                 </div>
 
                 <div className="space-y-4">
@@ -234,7 +289,7 @@ export default function AstronautDashboard() {
                         <span className="text-slate-900">{domain.score} / 100</span>
                       </div>
                       <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                        <div className={`${domain.color} h-2 rounded-full transition-all`} style={{ width: `${domain.score}%` }} />
+                        <div className={`${domain.color} h-2 rounded-full transition-all duration-300`} style={{ width: `${domain.score}%` }} />
                       </div>
                     </div>
                   ))}
@@ -246,43 +301,44 @@ export default function AstronautDashboard() {
             {/* Right Column (1 Span) */}
             <div className="space-y-6">
               
-              {/* Quick Biometrics Telemetry Card */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs">
-                <h3 className="text-sm font-bold text-slate-900 mb-4">Real-Time Telemetry</h3>
+              {/* Real-Time Telemetry Quick Status */}
+              <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
+                <h3 className="text-base font-black text-slate-900">Real-Time Telemetry</h3>
+                
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="p-3 bg-slate-50/80 border border-slate-200/60 rounded-2xl">
                     <span className="text-[10px] font-extrabold uppercase text-slate-400">Core Temp</span>
-                    <div className="text-lg font-bold text-slate-900 mt-0.5">37.0°C</div>
-                    <span className="text-[9px] text-emerald-600 font-bold">● Nominal</span>
+                    <div className="text-lg font-black text-slate-900 mt-0.5">37.0°C</div>
+                    <span className="text-[9px] text-emerald-600 font-extrabold">● Nominal</span>
                   </div>
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="p-3 bg-slate-50/80 border border-slate-200/60 rounded-2xl">
                     <span className="text-[10px] font-extrabold uppercase text-slate-400">SpO₂ Oxygen</span>
-                    <div className="text-lg font-bold text-slate-900 mt-0.5">98%</div>
-                    <span className="text-[9px] text-emerald-600 font-bold">● Nominal</span>
+                    <div className="text-lg font-black text-slate-900 mt-0.5">98%</div>
+                    <span className="text-[9px] text-emerald-600 font-extrabold">● Nominal</span>
                   </div>
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="p-3 bg-slate-50/80 border border-slate-200/60 rounded-2xl">
                     <span className="text-[10px] font-extrabold uppercase text-slate-400">HRV Variability</span>
-                    <div className="text-lg font-bold text-slate-900 mt-0.5">58 ms</div>
-                    <span className="text-[9px] text-amber-600 font-bold">● Slight Stress</span>
+                    <div className="text-lg font-black text-slate-900 mt-0.5">58 ms</div>
+                    <span className="text-[9px] text-amber-600 font-extrabold">● Slight Stress</span>
                   </div>
-                  <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                  <div className="p-3 bg-slate-50/80 border border-slate-200/60 rounded-2xl">
                     <span className="text-[10px] font-extrabold uppercase text-slate-400">Cabin CO₂</span>
-                    <div className="text-lg font-bold text-slate-900 mt-0.5">0.6%</div>
-                    <span className="text-[9px] text-emerald-600 font-bold">● Safe</span>
+                    <div className="text-lg font-black text-slate-900 mt-0.5">0.6%</div>
+                    <span className="text-[9px] text-emerald-600 font-extrabold">● Safe</span>
                   </div>
                 </div>
               </div>
 
-              {/* Today's Workout & Focus Tracker */}
-              <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+              {/* Today's Countermeasures & Schedule */}
+              <div className="bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-3xl p-6 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900">Today's Countermeasures</h3>
+                  <h3 className="text-base font-black text-slate-900">Today's Countermeasures</h3>
                   <Dumbbell className="w-4 h-4 text-blue-600" />
                 </div>
 
-                <div className="p-3 rounded-xl bg-blue-50/70 border border-blue-100 flex items-center justify-between">
+                <div className="p-3.5 rounded-2xl bg-blue-50/80 border border-blue-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+                    <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
                       2h
                     </div>
                     <div>
@@ -297,6 +353,7 @@ export default function AstronautDashboard() {
             </div>
 
           </div>
+
         </main>
       </div>
 
@@ -311,9 +368,23 @@ export default function AstronautDashboard() {
 
       {isAnalysisOpen && (
         <AnalysisModal
-          signal={analysisService.getAnalysisSignal('ast-01')}
+          signal={analysisService.getAnalysisSignal(selectedAstronautId)}
           isOpen={isAnalysisOpen}
           onClose={() => setIsAnalysisOpen(false)}
+        />
+      )}
+
+      {isSearchOpen && (
+        <GlobalSearchModal
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+        />
+      )}
+
+      {isNotificationOpen && (
+        <NotificationModal
+          isOpen={isNotificationOpen}
+          onClose={() => setIsNotificationOpen(false)}
         />
       )}
     </div>
