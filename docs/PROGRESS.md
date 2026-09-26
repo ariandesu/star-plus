@@ -89,14 +89,16 @@ gland name and excludes muscle/cartilage explicitly.
   the procedural placeholder geometry the brief prohibited.
 - `/medical` was migrated off the old pipeline onto the same real model viewer.
 
-### 6. Verification performed (real browser, not assumed)
+## Verification performed (real browser, not assumed)
 
 | Check | Result |
 |---|---|
 | All 4 routes load, zero console errors | pass |
 | Default view is the isolated, prominent 3D heart | pass |
 | Heart is anatomically recognizable (independent visual check) | pass |
-| Organ switching Heart→Lungs→Brain→Bones→Sleep with real group counts | pass |
+| All five systems load real models with synchronized analysis | pass |
+| Structures listed per system: Heart 14, Lungs 67, Brain 283, Bones 246, Sleep 12 | pass |
+| Skeleton shows the complete skeleton (skull, ribcage, spine, arms, legs) | pass |
 | Group → structure select → Isolate → ISOLATED badge | pass |
 | Isolation zoom coverage | 4.7% → **54.9%** after fix |
 | Anonymous access to protected routes | redirected to `/` |
@@ -105,9 +107,34 @@ gland name and excludes muscle/cartilage explicitly.
 | Search filters real data | pass |
 | WATCH full-explanation modal | pass |
 | Zero horizontal overflow at 1440/1280/1024/768/390/375 | pass |
-| `tsc --noEmit` | 0 errors |
+| `npm run verify` (anatomy + coverage + invariants + types) | 51/51 checks, 0 errors |
 | `npm run build` | 0 errors, 7 static pages |
-| `scripts/validate-anatomy.py` | all models + mappings valid |
+| `ocr` code review of the viewer commit | complete, 4 files, **0 findings** |
+
+### Defects found by exercising the build (and fixed)
+
+1. **Per-mesh materials stalled the browser.** Each structure got its own
+   `MeshStandardMaterial`, so the 246-mesh skeleton meant 246 shader programs
+   compiling on the main thread — the page hung. The viewer now shares exactly
+   two materials and switches the active structure between them. The transparent
+   base was also replaced with an opaque one, because transparency pushed every
+   structure into the depth-sorted transparent pass; visibility uses
+   `mesh.visible` instead.
+
+2. **A default group hid most of the organ.** Opening a system applied its first
+   structure group as a visibility filter, so Bones showed only the vertebral
+   column. Groups are now an optional filter that starts cleared, and the
+   structure list shows every loaded structure without requiring the user to
+   guess the right group.
+
+3. **No catch-all on the skeleton groups.** Coverage was 100% at the time, but a
+   future re-export adding an unmatched bone would have made it unreachable in
+   the UI. `scripts/test-catalog-and-metrics.mjs` caught this; a catch-all group
+   was added.
+
+4. **Isolation was technically correct but visually useless.** An isolated valve
+   filled 4.7% of the viewport at whole-heart framing. Isolation now re-frames
+   the camera and rewrites the orbit distance limits (**54.9%** measured).
 
 ## Honest limitations
 

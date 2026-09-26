@@ -75,9 +75,13 @@ code alone.
 
 ## Not verified / out of scope
 
+- **Cloudflare deployment is pending operator action.** The `wrangler` token is
+  not present in this environment, so the live site is one build behind. The
+  exact deploy command is in the handoff below.
 - **No automated browser test suite.** Verification was performed with scripted
   browser sessions and recorded measurements, not committed as CI. The
-  Python asset validators and the Next build are the reproducible gates.
+  reproducible gates are `npm run verify` (anatomy, coverage, invariants, types)
+  and `npm run build`.
 - **No cross-browser matrix.** Verified in Chromium only.
 - **Muscular model is built but not wired to a selector.** The brief's five
   systems map Musculoskeletal to the skeleton; `Muscular.glb` (376 muscles) is
@@ -91,3 +95,23 @@ code alone.
   telemetry from any real person.
 - **Route guarding is a demo boundary.** Enforced in the browser with demo
   credentials shipped in the bundle; it separates roles, it does not secure data.
+
+## Deploy handoff
+
+```bash
+cd /home/mahir-linux/Development/star-plus
+npm run build                              # already built; out/ is current
+CLOUDFLARE_API_TOKEN=<your-token> npx wrangler deploy
+```
+
+Then confirm the live chunk matches the local build:
+
+```bash
+curl -s https://star-plus.shareflow.workers.dev/astronaut/ \
+  | grep -oE '/_next/static/chunks/app/astronaut/[A-Za-z0-9_.-]+\.js'
+grep -oE '/_next/static/chunks/app/astronaut/[A-Za-z0-9_.-]+\.js' out/astronaut/index.html
+```
+
+The two hashes must be identical. A GitHub push does **not** trigger a deploy —
+verified: the live chunk hash stayed `page-cfebe752de28b746.js` while the local
+build produced `page-1f01c12b625af900.js`.
