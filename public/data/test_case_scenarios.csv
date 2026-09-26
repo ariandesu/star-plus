@@ -1,0 +1,11 @@
+Astronaut,Age,Mission_Days,Heart_Rate,Blood_Pressure,Bone_Density,Sleep_Hours,Symptom,Recommendation
+CDR Maya Chen,34,147,65,118/78,0.94,4.8,Sleep Disruption,Review sleep schedule & reduce non-critical workload
+Dr. Alex Rivera,38,120,58,115/72,1.05,7.5,None,Continue routine EVA protocols & baseline monitoring
+Lt. Sam Wilson,31,95,88,132/85,0.91,5.2,Elevated Stress,Initiate mindfulness protocol & workload adjustment
+Eng. Elena Rostova,42,210,72,120/78,0.86,6.0,Mild Microgravity Atrophy,Increase resistance exercise countermeasure sessions
+Spec. David Kim,36,45,62,112/74,1.02,7.8,None,Nominal status — proceed with planned mission ops
+Capt. Sarah Connor,40,180,78,125/80,0.88,5.5,Mild Fatigue,Recommend 8h sleep window & hydration tracking
+Dr. Marcus Vance,45,300,82,130/84,0.85,4.9,Headache,Check habitat O2/CO2 levels & schedule rest
+Pilot James Holden,33,60,60,110/70,1.08,8.0,None,Optimal physiological readiness
+Officer Naomi Nagata,35,160,74,118/76,0.92,6.2,Joint Stiffness,Apply thermal therapy & light mobility exercises
+Spec. Amos Burton,39,220,85,128/82,0.96,5.0,Cognitive Slowing,Mandatory 24h operational rest break
