@@ -1,261 +1,322 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Navbar from '../../components/Navbar';
-import { EnvironmentTelemetry, TimelineEvent, Astronaut } from '../../types';
-import { missionService } from '../../services/missionService';
+import Sidebar from '../../components/Sidebar';
+import HeaderBar from '../../components/HeaderBar';
+import AnalysisModal from '../../components/AnalysisModal';
+import MetricDetailModal from '../../components/MetricDetailModal';
 import { healthService } from '../../services/healthService';
+import { alertService } from '../../services/alertService';
+import { MOCK_ENVIRONMENT } from '../../data/mockData';
 import { authService } from '../../services/authService';
-import { simulationService } from '../../services/simulationService';
+import { Astronaut, HealthMetricDetail, AlertItem, AnalysisSignal, UserSession } from '../../types';
 import {
-  Shield,
   Activity,
-  Gauge,
+  ShieldCheck,
+  Radio,
   Thermometer,
   Wind,
-  Droplets,
-  Calendar,
+  Sun,
   AlertTriangle,
-  CheckCircle2,
+  Users,
+  ChevronRight,
+  TrendingUp,
   Clock,
-  UserCheck,
-  RefreshCw,
-  Zap,
-  Globe
+  Sparkles
 } from 'lucide-react';
 
 export default function MissionControlDashboard() {
-  const [session, setSession] = useState(authService.getSession());
-  const [environment, setEnvironment] = useState<EnvironmentTelemetry | null>(null);
-  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
-  const [astronauts, setAstronauts] = useState<Astronaut[]>([]);
-  const [missionIndex, setMissionIndex] = useState(86);
-  const [isSimulating, setIsSimulating] = useState(false);
-
-  const loadData = () => {
-    const currentSession = authService.getSession();
-    setSession(currentSession);
-
-    const env = missionService.getEnvironmentTelemetry();
-    setEnvironment(env);
-
-    const time = missionService.getMissionTimeline();
-    setTimeline(time);
-
-    const crew = healthService.getAstronauts();
-    setAstronauts(crew);
-
-    const idx = missionService.calculateMissionHealthIndex();
-    setMissionIndex(idx.score);
-
-    setIsSimulating(simulationService.isSimulating());
-  };
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [activeSignal, setActiveSignal] = useState<AnalysisSignal | null>(null);
+  const [selectedMetric, setSelectedMetric] = useState<HealthMetricDetail | null>(null);
 
   useEffect(() => {
-    loadData();
+    const s = authService.getSession();
+    if (s) setSession(s);
   }, []);
 
-  const handleToggleSimulation = () => {
-    if (isSimulating) {
-      simulationService.resetSimulation();
-    } else {
-      simulationService.startSimulation();
+  const crew = healthService.getAstronauts();
+  const alerts = alertService.getAlerts();
+  const env = MOCK_ENVIRONMENT;
+
+  const handleOpenSignal = (astId: string) => {
+    const signal = healthService.getAstronauts().find(a => a.id === astId);
+    if (signal) {
+      // Mock signal for modal
+      setActiveSignal({
+        id: 'sig-mc-01',
+        astronautId: astId,
+        astronautName: signal.name,
+        status: signal.status,
+        timeWindowHours: 72,
+        confidence: 'High',
+        title: `${signal.name} Mission Control Vital Diagnostics`,
+        summary: `Continuous telemetric analysis shows stable vitals with minor adaptation flags.`,
+        deviations: [
+          { metric: 'Heart Rate', baseline: '68 bpm', current: '74 bpm', deviationPercent: 8.8, direction: 'elevated' }
+        ],
+        possibleContributingFactors: ['Microgravity Fluid Shift', 'Circadian Phase Delay'],
+        recommendedActions: [
+          { id: 'act-1', action: 'Schedule 30min rest protocol', category: 'Sleep', isCompleted: false }
+        ],
+        timestamp: 'Just now'
+      });
     }
-    loadData();
   };
 
   return (
-    <div className="min-h-screen bg-[#F7FAFF] text-star-navy flex flex-col">
-      <Navbar session={session} onRefresh={loadData} />
+    <div className="flex h-screen bg-[#F4F7FC] text-slate-900 overflow-hidden">
+      {/* Left Sidebar */}
+      <Sidebar session={session} />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8">
-        {/* Header Banner */}
-        <div className="p-6 rounded-3xl bg-gradient-to-r from-slate-900 via-star-navy to-slate-900 text-white shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-6 border border-slate-800">
-          <div className="flex items-center gap-5">
-            <div className="w-14 h-14 rounded-2xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center text-blue-300 shadow-inner">
-              <Globe className="w-8 h-8" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-300 border border-blue-400/30">
-                  MISSION CONTROL OPS
-                </span>
-                <span className="text-xs text-slate-300 font-medium">Flight Dir. Sarah Jenkins • Houston Link</span>
-              </div>
-              <h1 className="text-2xl font-black tracking-tight text-white">Spacecraft Life Support & Mission Health Index</h1>
-              <p className="text-xs text-slate-300 mt-1">Real-time cabin environmental telemetry, crew operational status, and timeline events</p>
-            </div>
-          </div>
+      {/* Main Content View */}
+      <div className="flex-1 flex flex-col h-screen overflow-y-auto">
+        <HeaderBar session={session} pageTitle="Mission Control Command Dashboard" />
 
-          <button
-            onClick={handleToggleSimulation}
-            className={`px-4 py-2.5 rounded-xl font-extrabold text-xs transition flex items-center gap-2 shadow-md ${
-              isSimulating
-                ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                : 'bg-gradient-to-r from-star-blue to-blue-500 hover:from-blue-600 hover:to-star-blue text-white'
-            }`}
-          >
-            <RefreshCw className={`w-4 h-4 ${isSimulating ? 'animate-spin' : ''}`} />
-            <span>{isSimulating ? 'Reset to Day 147 Anomaly' : 'Simulate Day 150 Restored Index'}</span>
-          </button>
-        </div>
-
-        {/* Mission Health Index & Cabin Environment Top Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Mission Health Index Card */}
-          <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-star-card flex flex-col justify-between space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <span className="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Overall Mission Health Index</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-star-blue border border-blue-200">
-                Artemis Base Alpha
-              </span>
-            </div>
-
-            <div className="flex items-baseline justify-between py-2">
-              <div>
-                <span className="text-5xl font-black text-star-navy tracking-tight">{missionIndex}</span>
-                <span className="text-lg font-bold text-slate-400"> / 100</span>
-              </div>
-              <div className="text-right">
-                <span className={`px-3 py-1 rounded-full text-xs font-black ${
-                  missionIndex >= 90 ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'
-                }`}>
-                  {missionIndex >= 90 ? 'NOMINAL READINESS' : 'WATCH FLAG ACTIVE'}
+        <main className="p-6 space-y-6 max-w-[1600px] mx-auto w-full">
+          {/* Top Mission Status KPI Row (4 Panels) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            
+            {/* Mission Health Index */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase text-slate-400">Mission Health Index</span>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-100 text-emerald-700">
+                  NOMINAL
                 </span>
               </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-slate-900">86</span>
+                <span className="text-xs font-semibold text-slate-400">/ 100</span>
+              </div>
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-emerald-500 h-1.5 rounded-full w-[86%]" />
+              </div>
             </div>
 
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Calculated dynamically based on 4 astronaut physiological signals, cabin atmosphere telemetry, and life support system sensors.
-            </p>
+            {/* Crew Status Breakdown */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase text-slate-400">Crew Status</span>
+                <Users className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-slate-900">3 Stable</span>
+                <span className="text-xs font-semibold text-amber-600 font-bold">1 Watch</span>
+              </div>
+              <p className="text-[11px] text-slate-500">4 Crew members active on station</p>
+            </div>
+
+            {/* Spacecraft Environment */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase text-slate-400">Life Support (ECLSS)</span>
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-slate-900">100%</span>
+                <span className="text-xs font-semibold text-emerald-600">STABLE</span>
+              </div>
+              <p className="text-[11px] text-slate-500">Cabin CO2: 0.6% | Temp: 22°C</p>
+            </div>
+
+            {/* Mission Timeline */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-extrabold uppercase text-slate-400">Mission Progress</span>
+                <Radio className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-extrabold text-slate-900">Day 147</span>
+                <span className="text-xs font-semibold text-slate-400">/ 365</span>
+              </div>
+              <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div className="bg-blue-600 h-1.5 rounded-full w-[40%]" />
+              </div>
+            </div>
+
           </div>
 
-          {/* Cabin Environment Telemetry (2 Columns Wide) */}
-          <div className="lg:col-span-2 p-6 rounded-3xl bg-white border border-slate-200 shadow-star-card space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <Wind className="w-5 h-5 text-star-blue" />
-                <h2 className="text-base font-extrabold text-star-navy">Cabin Environmental Telemetry</h2>
-              </div>
-              <span className="text-xs font-extrabold text-emerald-600 flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                100% Sensor Sync
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">CO2 Level</span>
-                <p className="text-xl font-black text-star-navy">{environment?.co2?.current} mmHg</p>
-                <span className="text-[10px] text-emerald-600 font-semibold">Nominal (&lt; 4.0)</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">Cabin Temp</span>
-                <p className="text-xl font-black text-star-navy">{environment?.temperature?.current} °C</p>
-                <span className="text-[10px] text-emerald-600 font-semibold">Nominal (20-23)</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">Humidity</span>
-                <p className="text-xl font-black text-star-navy">{environment?.humidity?.current} %</p>
-                <span className="text-[10px] text-emerald-600 font-semibold">Nominal (40-60)</span>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-1">
-                <span className="text-[11px] font-bold text-slate-400 uppercase">Radiation Exposure</span>
-                <p className="text-xl font-black text-star-navy">{environment?.radiation?.current} mSv/day</p>
-                <span className="text-[10px] text-emerald-600 font-semibold">Nominal (&lt; 0.60)</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Crew Operational Readiness Grid */}
-        <div className="space-y-4">
-          <h2 className="text-base font-extrabold text-star-navy flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-star-blue" />
-            Crew Member Readiness & Operational Status
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {astronauts.map((astro) => (
-              <div key={astro.id} className="p-5 rounded-3xl bg-white border border-slate-200 shadow-star-card space-y-3">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={astro.avatarUrl}
-                    alt={astro.name}
-                    className="w-12 h-12 rounded-2xl object-cover border border-slate-200"
-                  />
-                  <div>
-                    <h3 className="text-sm font-extrabold text-star-navy">{astro.name}</h3>
-                    <p className="text-xs text-slate-500 font-semibold">{astro.role}</p>
-                  </div>
+          {/* Middle Grid: Crew Health List & Mission Domain Performance */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Crew Health Status List (2 Span) */}
+            <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Crew Telemetry Status</h3>
+                  <p className="text-xs text-slate-500">Live monitoring of all mission personnel</p>
                 </div>
-
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-bold">
-                  <span className="text-slate-500">Status</span>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
-                    astro.status === 'WATCH' ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                  }`}>
-                    {astro.status}
-                  </span>
-                </div>
-
-                <div className="space-y-1 text-xs text-slate-600">
-                  <div className="flex justify-between">
-                    <span>Heart Rate:</span>
-                    <strong className="text-star-navy">{astro.currentVitals?.heartRate || astro.baseline.heartRate} bpm</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Sleep (72h):</span>
-                    <strong className="text-star-navy">{astro.currentVitals?.sleepDuration || astro.baseline.sleepHours} hrs</strong>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Stress Index:</span>
-                    <strong className="text-star-navy">{astro.currentVitals?.stressIndex || astro.baseline.stressLevel} / 100</strong>
-                  </div>
-                </div>
+                <span className="text-xs font-bold text-blue-600">4 Active Sessions</span>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Mission Timeline Feed */}
-        <div className="p-6 rounded-3xl bg-white border border-slate-200 shadow-star-card space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-star-blue" />
-              <h2 className="text-base font-extrabold text-star-navy">Artemis Base Alpha Mission Timeline</h2>
-            </div>
-            <span className="text-xs text-slate-500 font-medium">Mission Day 147</span>
-          </div>
+              <div className="space-y-3">
+                {crew.map((ast) => {
+                  const isWatch = ast.status === 'WATCH';
+                  return (
+                    <div
+                      key={ast.id}
+                      className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 font-bold flex items-center justify-center text-sm">
+                          {ast.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h4 className="text-sm font-bold text-slate-900">{ast.name}</h4>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase ${
+                              isWatch ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'
+                            }`}>
+                              {ast.status}
+                            </span>
+                          </div>
+                          <p className="text-xs text-slate-500">{ast.role} • Day {ast.missionDay}</p>
+                        </div>
+                      </div>
 
-          <div className="space-y-3">
-            {timeline.map((evt) => (
-              <div key={evt.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start justify-between gap-4">
-                <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-xl text-white shrink-0 mt-0.5 ${
-                    evt.category === 'Medical' ? 'bg-amber-500' : evt.category === 'Telemetry' ? 'bg-star-purple' : 'bg-star-blue'
-                  }`}>
-                    {evt.category === 'Medical' ? <AlertTriangle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono font-bold text-slate-500">Day {evt.day} • {evt.date}</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white text-slate-600 border border-slate-200">
-                        {evt.category}
-                      </span>
+                      <div className="flex items-center gap-6 text-xs">
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">HR Baseline</span>
+                          <span className="font-extrabold text-slate-900">{ast.currentVitals?.heartRate || ast.baseline.heartRate} bpm</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 font-bold uppercase block">Sleep Load</span>
+                          <span className="font-extrabold text-slate-900">{ast.currentVitals?.sleepDuration || ast.baseline.sleepHours} hrs</span>
+                        </div>
+                        <button
+                          onClick={() => handleOpenSignal(ast.id)}
+                          className="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-bold text-xs hover:bg-blue-700 transition"
+                        >
+                          Telemetry Signal
+                        </button>
+                      </div>
                     </div>
-                    <h4 className="text-sm font-extrabold text-star-navy mt-1">{evt.title}</h4>
-                    <p className="text-xs text-slate-600 mt-0.5">{evt.description}</p>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Mission Average Domain Performance (1 Span) */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-slate-900">Mission Domain Index</h3>
+                <Activity className="w-4 h-4 text-blue-600" />
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  { name: 'Cardiovascular', score: 91, color: 'bg-emerald-500' },
+                  { name: 'Sleep & Recovery', score: 72, color: 'bg-amber-500' },
+                  { name: 'Cognitive Performance', score: 88, color: 'bg-emerald-500' },
+                  { name: 'Musculoskeletal', score: 83, color: 'bg-emerald-500' },
+                  { name: 'Psychological Load', score: 76, color: 'bg-blue-500' },
+                  { name: 'Nutritional Intake', score: 85, color: 'bg-emerald-500' },
+                  { name: 'Radiation Exposure', score: 81, color: 'bg-blue-500' },
+                ].map((dom) => (
+                  <div key={dom.name} className="space-y-1">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-slate-700">{dom.name}</span>
+                      <span className="font-bold text-slate-900">{dom.score}%</span>
+                    </div>
+                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                      <div className={`h-2 rounded-full ${dom.color}`} style={{ width: `${dom.score}%` }} />
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Bottom Section: Spacecraft Environment & Active Alert Feed */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Spacecraft Environment Telemetry (1 Span) */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-slate-900">Cabin ECLSS Telemetry</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs">
+                    <Wind className="w-3.5 h-3.5 text-blue-600" />
+                    <span>CO2 Level</span>
+                  </div>
+                  <div className="text-lg font-extrabold text-slate-900 mt-1">{env.co2.current}%</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs">
+                    <Thermometer className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Temperature</span>
+                  </div>
+                  <div className="text-lg font-extrabold text-slate-900 mt-1">{env.temperature.current}°C</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs">
+                    <Activity className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Humidity</span>
+                  </div>
+                  <div className="text-lg font-extrabold text-slate-900 mt-1">{env.humidity.current}%</div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center gap-2 text-slate-500 text-xs">
+                    <Sun className="w-3.5 h-3.5 text-purple-600" />
+                    <span>Radiation</span>
+                  </div>
+                  <div className="text-lg font-extrabold text-slate-900 mt-1">{env.radiation.current} mSv/h</div>
                 </div>
               </div>
-            ))}
+            </div>
+
+            {/* Active Telemetry Alerts (2 Span) */}
+            <div className="lg:col-span-2 bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+              <h3 className="text-sm font-bold text-slate-900">Active Telemetry Alerts Feed</h3>
+              <div className="space-y-3">
+                {alerts.map((alert) => (
+                  <div
+                    key={alert.id}
+                    className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`p-2 rounded-xl text-white font-bold ${
+                        alert.severity === 'CRITICAL' ? 'bg-rose-500' : alert.severity === 'WARNING' ? 'bg-amber-500' : 'bg-blue-500'
+                      }`}>
+                        <AlertTriangle className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-slate-900">{alert.title}</h4>
+                        <p className="text-[11px] text-slate-500">{alert.description}</p>
+                      </div>
+                    </div>
+
+                    <span className="text-[10px] font-bold text-slate-400">{alert.timestamp}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
+
+      {/* Modals */}
+      {activeSignal && (
+        <AnalysisModal
+          signal={activeSignal}
+          isOpen={!!activeSignal}
+          onClose={() => setActiveSignal(null)}
+        />
+      )}
+
+      {selectedMetric && (
+        <MetricDetailModal
+          metric={selectedMetric}
+          isOpen={!!selectedMetric}
+          onClose={() => setSelectedMetric(null)}
+        />
+      )}
     </div>
   );
 }
