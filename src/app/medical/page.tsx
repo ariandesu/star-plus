@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../../components/TopHeader';
-import OrganHealthScene, { HealthSystemType } from '../../components/three/OrganHealthScene';
+import BodyPartsOrganScene, { HealthSystemType } from '../../components/three/BodyPartsOrganScene';
 import AnalysisModal from '../../components/AnalysisModal';
 import MetricDetailModal from '../../components/MetricDetailModal';
 import { MOCK_ASTRONAUTS, MOCK_ALERTS, MAYA_ANALYSIS_SIGNAL } from '../../data/mockData';
@@ -162,8 +162,8 @@ export default function MedicalPage() {
             {/* ========================================================= */}
             <div className="lg:col-span-5 space-y-4">
               
-              {/* Three.js 3D Health Visualizer */}
-              <OrganHealthScene
+              {/* Three.js BodyParts3D 3D Health Visualizer */}
+              <BodyPartsOrganScene
                 selectedSystem={selectedSystem}
                 onSelectSystem={(sys: HealthSystemType) => setSelectedSystem(sys)}
                 astronautName={currentAstronaut.name}

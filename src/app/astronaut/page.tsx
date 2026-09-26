@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../../components/TopHeader';
-import OrganHealthScene, { HealthSystemType } from '../../components/three/OrganHealthScene';
+import BodyPartsOrganScene, { HealthSystemType } from '../../components/three/BodyPartsOrganScene';
 import MetricDetailModal from '../../components/MetricDetailModal';
 import AnalysisModal from '../../components/AnalysisModal';
 import { healthService } from '../../services/healthService';
@@ -165,10 +165,10 @@ export default function AstronautDashboard() {
           {/* ========================================================= */}
           <div className="lg:col-span-5 space-y-4">
             
-            {/* 3D Three.js Detailed Organ Visual Anchor (Default = Heart) */}
-            <OrganHealthScene
+            {/* 3D BodyParts3D Detailed Organ Centerpiece (Default = Heart) */}
+            <BodyPartsOrganScene
               selectedSystem={selectedSystem}
-              onSelectSystem={(sys) => setSelectedSystem(sys)}
+              onSelectSystem={(sys: HealthSystemType) => setSelectedSystem(sys)}
               astronautName={astronaut.name}
               metricValue={floatingProps.value}
               metricLabel={floatingProps.label}
