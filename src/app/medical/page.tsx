@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../../components/TopHeader';
-import AstronautHealthScene, { HealthSystemType } from '../../components/three/AstronautHealthScene';
+import OrganHealthScene, { HealthSystemType } from '../../components/three/OrganHealthScene';
 import AnalysisModal from '../../components/AnalysisModal';
 import MetricDetailModal from '../../components/MetricDetailModal';
 import { MOCK_ASTRONAUTS, MOCK_ALERTS, MAYA_ANALYSIS_SIGNAL } from '../../data/mockData';
@@ -19,7 +19,7 @@ import {
 export default function MedicalPage() {
   const [session, setSession] = useState<any>(null);
   const [selectedAstronautId, setSelectedAstronautId] = useState<string>('maya-chen');
-  const [selectedSystem, setSelectedSystem] = useState<HealthSystemType>('cardiovascular');
+  const [selectedSystem, setSelectedSystem] = useState<HealthSystemType>('CARDIOVASCULAR');
   const [timeHorizon, setTimeHorizon] = useState<'24H' | '7D' | '30D'>('24H');
   const [alerts, setAlerts] = useState(MOCK_ALERTS);
   const [clinicalNotes, setClinicalNotes] = useState<Record<string, string>>({
@@ -163,14 +163,11 @@ export default function MedicalPage() {
             <div className="lg:col-span-5 space-y-4">
               
               {/* Three.js 3D Health Visualizer */}
-              <AstronautHealthScene
+              <OrganHealthScene
                 selectedSystem={selectedSystem}
-                onSelectSystem={(sys) => setSelectedSystem(sys)}
+                onSelectSystem={(sys: HealthSystemType) => setSelectedSystem(sys)}
                 astronautName={currentAstronaut.name}
-                heartRate={selectedAstronautId === 'maya-chen' ? 65 : 72}
-                spo2={98}
-                sleepHours={selectedAstronautId === 'maya-chen' ? 4.8 : 7.2}
-                stressIndex={selectedAstronautId === 'maya-chen' ? 26 : 18}
+                status={currentAstronaut.status as any}
               />
 
               {/* Crew Roster Quick Target Selector */}
