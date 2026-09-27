@@ -336,7 +336,7 @@ function OrganScene({
     materials.highlight.emissive.copy(highlightColor).multiplyScalar(0.3);
 
     for (const entry of entries) {
-      const active = entry.name === hovered || entry.name === selected;
+      const active = selectable && (entry.name === hovered || entry.name === selected);
       const inGroup = visible === null || visible.has(entry.name);
       const allowedByIsolation = isolated === null || isolated === entry.name;
 
@@ -344,11 +344,11 @@ function OrganScene({
       const wanted = active ? materials.highlight : entry.base;
       if (entry.mesh.material !== wanted) entry.mesh.material = wanted;
     }
-  }, [entries, hovered, selected, visible, isolated, materials, accent]);
+  }, [entries, hovered, selected, visible, isolated, materials, accent, selectable]);
 
-  // Gentle pulse on the active structure only.
+  // Gentle pulse on the active structure only (for selectable models).
   useEffect(() => {
-    if (reducedMotion) return;
+    if (reducedMotion || !selectable) return;
     const activeMeshes = entries.filter((e) => e.name === hovered || e.name === selected);
     if (!activeMeshes.length) return;
     let raf = 0;
@@ -364,7 +364,14 @@ function OrganScene({
       cancelAnimationFrame(raf);
       activeMeshes.forEach((e) => e.mesh.scale.setScalar(1));
     };
-  }, [entries, hovered, selected, reducedMotion]);
+  }, [entries, hovered, selected, reducedMotion, selectable]);
+
+  // Static slow left-to-right rotation animation for all realistic 3D models.
+  useFrame((state) => {
+    if (reducedMotion || !gltf.scene) return;
+    const time = state.clock.getElapsedTime();
+    gltf.scene.rotation.y = Math.sin(time * 0.45) * 0.35;
+  });
 
   /**
    * The region the camera should be looking at: the isolated structure when one
