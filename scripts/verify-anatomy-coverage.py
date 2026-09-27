@@ -46,11 +46,8 @@ GROUPS = {
     "realistic_human_skeleton.glb": [
         ("whole", [], [], True),
     ],
-    "Endocrine.glb": [
-        ("circadian", ["pineal", "hypothalam", "pituitary"], [], False),
-        ("stress", ["adrenal", "thyroid", "parathyroid"], [], False),
-        ("metabolic", ["pancrea", "gonad", "thymus", "testis", "testicle", "ovary"], [], False),
-        ("other", [], [], True),
+    "sleep_astronaut.glb": [
+        ("whole", [], [], True),
     ],
 }
 

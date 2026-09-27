@@ -205,43 +205,21 @@ export const ORGAN_DEFINITIONS: Record<OrganSystemKey, OrganDefinition> = {
 
   SLEEP: {
     system: 'SLEEP',
-    file: 'Endocrine.glb',
-    modelName: '3D Reference Organ — Endocrine Structures (BodyParts3D 4.0)',
-    source: 'BodyParts3D / DBCLS',
-    organLabel: 'Endocrine System',
+    file: 'sleep_astronaut.glb',
+    modelName: '3D Astronaut Sleep Environment Pod',
+    source: 'STAR PLUS Microgravity Sleep Chamber Model',
+    organLabel: 'Sleep & Circadian Environment',
     accent: '#4f46e5',
     orientation: [0, 0, 0],
-    defaultGroup: 'circadian',
-    partitioned: true,
+    defaultGroup: 'whole',
+    partitioned: false,
     groups: [
       {
-        id: 'circadian',
-        label: 'Circadian Regulators',
-        match: ['pineal', 'hypothalam', 'pituitary'],
-        description:
-          'Pineal body, hypothalamus and pituitary. These drive the melatonin rhythm that the sleep metrics are modelled on.',
-      },
-      {
-        id: 'stress',
-        label: 'Stress-Axis Glands',
-        match: ['adrenal', 'thyroid', 'parathyroid'],
-        description:
-          'Adrenal and thyroid glands. Cortisol and thyroid hormone set the metabolic and stress-response baseline.',
-      },
-      {
-        id: 'metabolic',
-        label: 'Metabolic & Reproductive Glands',
-        match: ['pancrea', 'gonad', 'thymus', 'testis', 'testicle', 'ovary'],
-        description:
-          'Pancreatic tissue, thymus and gonadal glands involved in glucose handling, immune maturation and long-duration endocrine adaptation.',
-      },
-      {
-        id: 'other',
-        label: 'Other Structures',
+        id: 'whole',
+        label: 'Sleep & Circadian Environment',
+        match: ['*'],
         isCatchAll: true,
-        match: [],
-        description:
-          'Remaining structures in this model that are not part of the primary endocrine groups.',
+        description: 'Complete 3D model of the microgravity sleep capsule and circadian environment.',
       },
     ],
   },

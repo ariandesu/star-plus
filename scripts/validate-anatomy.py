@@ -61,14 +61,10 @@ CATALOG = {
         "budget_mb": 4.0,
         "groups": [("all", [], [], True)],
     },
-    "Endocrine.glb": {
-        "budget_mb": 0.3,
-        "groups": [
-            ("circadian", ["pineal", "hypothalam", "pituitary"], [], False),
-            ("stress", ["adrenal", "thyroid", "parathyroid"], [], False),
-            ("metabolic", ["pancrea", "gonad", "thymus", "testis", "testicle", "ovary"], [], False),
-            ("other", [], [], True),
-        ],
+    "sleep_astronaut.glb": {
+        "budget_mb": 1.0,
+        "groups": [("whole", [], [], True)],
+        "prefix_required": False,
     },
 }
 

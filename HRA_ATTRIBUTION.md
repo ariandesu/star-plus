@@ -15,6 +15,7 @@ Used for: **Cardiovascular** (heart), **Respiratory** (lungs), **Cognitive** (br
 - **Realistic Human Lungs**: `realistic_human_lungs.glb` by neshallads (CC BY 4.0).
 - **Realistic Human Brain**: `realistic_human_brain.glb` by 3DRT STUDIOS (CC BY 4.0).
 - **Realistic Human Skeleton**: `realistic_human_skeleton.glb` by Wunna Ko Ko (CC BY 4.0).
+- **Astronaut Sleep Environment**: `sleep_astronaut.glb` — STAR PLUS Microgravity Sleep Chamber Model with alpha blend transparency.
 
 ### Structure partitioning
 
