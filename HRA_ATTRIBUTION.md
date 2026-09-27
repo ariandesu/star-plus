@@ -7,19 +7,18 @@ licence.
 
 ---
 
-## 1. Realistic Human Heart (Sketchfab / neshallads) — Heart
+## 1. Realistic Human Organ Models (Sketchfab / User Supplied)
 
-Used for: **Cardiovascular** (heart).
+Used for: **Cardiovascular** (heart), **Respiratory** (lungs), **Cognitive** (brain), **Musculoskeletal** (skeleton).
 
-- Source: "Realistic Human Heart" by neshallads on Sketchfab.
-- File: `realistic_human_heart.glb`
-- Model URL: <https://sketchfab.com/3d-models/realistic-human-heart-3b56a310c85c2d3855ff4acdd4e4d770c0c169eeaa1a1be8284501460395349f>
-- Licence: **Creative Commons Attribution 4.0 International (CC BY 4.0)** —
-  <https://creativecommons.org/licenses/by/4.0/>
+- **Realistic Human Heart**: `realistic_human_heart.glb` by neshallads (CC BY 4.0).
+- **Realistic Human Lungs**: `realistic_human_lungs.glb` by neshallads (CC BY 4.0).
+- **Realistic Human Brain**: `realistic_human_brain.glb` by 3DRT STUDIOS (CC BY 4.0).
+- **Realistic Human Skeleton**: `realistic_human_skeleton.glb` by Wunna Ko Ko (CC BY 4.0).
 
 ### Structure partitioning
 
-`realistic_human_heart.glb` is a photoreal single-surface model with authored PBR texture maps (base color, roughness, metalness). It is rendered as a whole organ (`partitioned: false`) with standard viewport orbit controls (rotate/zoom/reset). Sub-structure hover, click selection, and mesh isolation highlights are disabled to avoid presenting fabricated structure labels.
+All four user-supplied photoreal organ assets are rendered with their authored high-resolution PBR texture maps (diffuse, normal, roughness) as fused whole-organ models (`partitioned: false`). Sub-structure hover highlights and click selection are disabled, and each model displays a gentle static left-to-right turntable rotation.
 
 ---
 

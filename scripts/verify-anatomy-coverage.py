@@ -37,40 +37,14 @@ GROUPS = {
     "realistic_human_heart.glb": [
         ("whole", [], [], True),
     ],
-    "VH_M_Lung.glb": [
-        ("lobes", ["lobe", "lungs_l", "lungs_r", "hilum"], ["bronch"], False),
-        ("segments", ["bronchopulmonary_segment"], [], False),
-        ("airway", ["trachea", "bronch", "carina"], ["bronchopulmonary"], False),
-        ("cartilage", ["cartilage"], [], False),
-        ("other", [], [], True),
+    "realistic_human_lungs.glb": [
+        ("whole", [], [], True),
     ],
-    "Allen_M_Brain.glb": [
-        ("cortex", ["gyrus", "cortex", "lobule", "pole", "operculum", "planum"],
-         ["cingulate", "hippocamp", "parahippocamp"], False),
-        ("limbic", ["hippocamp", "amygdal", "cingulate", "fornix", "septal", "parahippocamp",
-                    "olfactory", "piriform", "basal_forebrain", "stria_terminalis",
-                    "central_nuclear_group", "basolateral_nucleus", "basomedial_nucleus",
-                    "lateral_nucleus", "cortical_nucleus", "medial_nucleus"], [], False),
-        ("deep", ["putamen", "caudate", "globus_pallidus", "accumbens", "claustrum", "subthalamic"], [], False),
-        ("thalamus", ["thalamus", "geniculate", "habenular", "pulvinar"], [], False),
-        ("hindbrain", ["cerebell", "pons", "medulla", "midbrain", "colliculus", "tegmentum", "vermis", "olive"], [], False),
-        ("ventricles", ["ventricle", "aqueduct", "central_canal", "chiasm"], [], False),
-        ("endocrine", ["pineal", "hypothalam", "pituitary"], [], False),
-        ("other", [], [], True),
+    "realistic_human_brain.glb": [
+        ("whole", [], [], True),
     ],
-    "Skeleton.glb": [
-        ("spine", ["vertebra", "vertebral", "intervertebral", "atlas", "axis", "sacrum", "coccyx"], [], False),
-        ("thorax", ["rib", "sternum", "manubrium", "xiphoid", "costal cartilage"], [], False),
-        ("skull", ["ethmoid", "frontal bone", "parietal", "temporal bone", "occipital", "sphenoid",
-                   "vomer", "maxilla", "zygomatic", "nasal bone", "palatine bone", "mandible",
-                   "hyoid", "cricoid", "arytenoid cartilage", "corniculate", "cuneiform cartilage",
-                   "thyroid cartilage", "alar cartilage"], [], False),
-        ("upper", ["humerus", "radius", "ulna", "scapula", "clavicle", "metacarpal", "scaphoid",
-                   "lunate", "triquetral", "pisiform", "trapezium", "trapezoid", "capitate",
-                   "hamate", "finger", "thumb"], [], False),
-        ("lower", ["femur", "tibia", "fibula", "patella", "hip bone", "pelvis", "metatarsal",
-                   "talus", "calcaneus", "navicular", "cuboid", "cuneiform bone", "sesamoid", "toe"], [], False),
-        ("other", [], [], True),
+    "realistic_human_skeleton.glb": [
+        ("whole", [], [], True),
     ],
     "Endocrine.glb": [
         ("circadian", ["pineal", "hypothalam", "pituitary"], [], False),

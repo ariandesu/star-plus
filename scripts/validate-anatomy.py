@@ -34,54 +34,28 @@ CATALOG = {
         "groups": [
             ("whole", [], [], True),
         ],
-        # Node names here are exporter scaffolding (Sketchfab_model, hart:ZBrush_*),
-        # not source-prefixed anatomical concepts, so the prefix invariant does
-        # not apply to it.
         "prefix_required": False,
     },
-    "VH_M_Lung.glb": {
-        "budget_mb": 2.0,
+    "realistic_human_lungs.glb": {
+        "budget_mb": 20.0,
         "groups": [
-            ("lobes", ["lobe", "lungs_l", "lungs_r", "hilum"], ["bronch"], False),
-            ("segments", ["bronchopulmonary_segment"], [], False),
-            ("airway", ["trachea", "bronch", "carina"], ["bronchopulmonary"], False),
-            ("cartilage", ["cartilage"], [], False),
-            ("other", [], [], True),
+            ("whole", [], [], True),
         ],
+        "prefix_required": False,
     },
-    "Allen_M_Brain.glb": {
-        "budget_mb": 4.0,
+    "realistic_human_brain.glb": {
+        "budget_mb": 5.0,
         "groups": [
-            ("cortex", ["gyrus", "cortex", "lobule", "pole", "operculum", "planum"],
-             ["cingulate", "hippocamp", "parahippocamp"], False),
-            ("limbic", ["hippocamp", "amygdal", "cingulate", "fornix", "septal", "parahippocamp",
-                        "olfactory", "piriform", "basal_forebrain", "stria_terminalis",
-                        "central_nuclear_group", "basolateral_nucleus", "basomedial_nucleus",
-                        "lateral_nucleus", "cortical_nucleus", "medial_nucleus"], [], False),
-            ("deep", ["putamen", "caudate", "globus_pallidus", "accumbens", "claustrum", "subthalamic"], [], False),
-            ("thalamus", ["thalamus", "geniculate", "habenular", "pulvinar"], [], False),
-            ("hindbrain", ["cerebell", "pons", "medulla", "midbrain", "colliculus", "tegmentum", "vermis", "olive"], [], False),
-            ("ventricles", ["ventricle", "aqueduct", "central_canal", "chiasm"], [], False),
-            ("endocrine", ["pineal", "hypothalam", "pituitary", "hth"], [], False),
-            ("other", [], [], True),
+            ("whole", [], [], True),
         ],
+        "prefix_required": False,
     },
-    "Skeleton.glb": {
-        "budget_mb": 2.0,
+    "realistic_human_skeleton.glb": {
+        "budget_mb": 12.0,
         "groups": [
-            ("spine", ["vertebra", "vertebral", "intervertebral", "atlas", "axis", "sacrum", "coccyx"], [], False),
-            ("thorax", ["rib", "sternum", "manubrium", "xiphoid", "costal cartilage"], [], False),
-            ("skull", ["ethmoid", "frontal bone", "parietal", "temporal bone", "occipital", "sphenoid",
-                       "vomer", "maxilla", "zygomatic", "nasal bone", "palatine bone", "mandible",
-                       "hyoid", "cricoid", "arytenoid cartilage", "corniculate", "cuneiform cartilage",
-                       "thyroid cartilage", "alar cartilage"], [], False),
-            ("upper", ["humerus", "radius", "ulna", "scapula", "clavicle", "metacarpal", "scaphoid",
-                       "lunate", "triquetral", "pisiform", "trapezium", "trapezoid", "capitate",
-                       "hamate", "finger", "thumb"], [], False),
-            ("lower", ["femur", "tibia", "fibula", "patella", "hip bone", "pelvis", "metatarsal",
-                       "talus", "calcaneus", "navicular", "cuboid", "cuneiform bone", "sesamoid", "toe"], [], False),
-            ("other", [], [], True),
+            ("whole", [], [], True),
         ],
+        "prefix_required": False,
     },
     "Muscular.glb": {
         "budget_mb": 4.0,
