@@ -76,23 +76,13 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans select-none">
+    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans select-none bg-[url('/images/hero-bg.png')] bg-cover bg-center bg-no-repeat">
       
-      {/* Space Horizon & Orbital Sunrise Background Layer */}
-      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-        {/* Orbital Earth Atmosphere Mesh */}
-        <div className="absolute top-1/4 -left-1/4 w-[120%] h-[120%] rounded-[100%] bg-gradient-to-tr from-[#020617] via-[#0D2854] to-[#2563EB] opacity-90 blur-xl transform -rotate-12" />
-        
-        {/* Glow Flares */}
-        <div className="absolute top-1/4 left-1/3 w-[550px] h-[550px] bg-sky-400/20 rounded-full blur-[130px] mix-blend-screen" />
-        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-amber-200/15 rounded-full blur-[80px] mix-blend-screen" />
-
-        {/* Moon Orb */}
-        <div className="absolute top-8 right-1/3 w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 via-slate-300 to-slate-600 opacity-60 shadow-2xl blur-[0.5px]" />
-      </div>
+      {/* Background Dim & Blur Overlay */}
+      <div className="absolute inset-0 pointer-events-none z-0 bg-slate-950/25 backdrop-blur-[1px]" />
 
       {/* Top Header Navigation */}
-      <header className="relative z-20 px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-md">
+      <header className="relative z-20 px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-800/60 bg-slate-950/50 backdrop-blur-md">
         <div className="flex items-center gap-6">
           {/* Logo & Brand Title */}
           <div className="flex items-center gap-3">
@@ -113,7 +103,7 @@ export default function LandingPage() {
           {/* Vertical Divider & NASA Space Apps Badge */}
           <div className="hidden sm:flex items-center gap-4 border-l border-slate-800/80 pl-6 text-xs font-semibold">
             <div>
-              <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">NASA SPACE APPS</span>
+              <span className="text-slate-300 block text-[10px] font-bold uppercase tracking-wider">NASA SPACE APPS</span>
               <span className="text-white font-extrabold">CHALLENGE 2026</span>
             </div>
           </div>
@@ -122,7 +112,7 @@ export default function LandingPage() {
         {/* Right Mission Badge */}
         <div className="hidden md:flex items-center gap-3 border-l border-slate-800/80 pl-6 text-xs font-semibold">
           <div>
-            <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">AURORA-1</span>
+            <span className="text-slate-300 block text-[10px] font-bold uppercase tracking-wider">AURORA-1</span>
             <span className="text-white font-extrabold">Deep Space Research Mission</span>
           </div>
         </div>
@@ -134,26 +124,26 @@ export default function LandingPage() {
         {/* Left Hero Marketing Column */}
         <div className="lg:col-span-6 space-y-6 pr-0 lg:pr-6">
           <div className="space-y-4">
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1]">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1] drop-shadow-md">
               Healthier <br />
               Missions, <br />
               <span className="text-blue-500">Brighter Futures.</span>
             </h1>
 
             <div className="space-y-1.5 pt-2">
-              <p className="text-base sm:text-lg font-bold text-slate-200">
+              <p className="text-base sm:text-lg font-bold text-slate-100 drop-shadow">
                 Monitor. Understand. Support.
               </p>
-              <p className="text-xs sm:text-sm font-medium text-slate-300">
+              <p className="text-xs sm:text-sm font-medium text-slate-200 drop-shadow">
                 For every human, on every mission.
               </p>
               {/* Accent Line */}
-              <div className="w-16 h-1 bg-blue-500 rounded-full mt-3" />
+              <div className="w-16 h-1 bg-blue-500 rounded-full mt-3 shadow-sm" />
             </div>
           </div>
 
           {/* Bottom Left Tagline */}
-          <div className="pt-6 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] font-extrabold tracking-widest text-slate-300 uppercase">
+          <div className="pt-6 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] font-extrabold tracking-widest text-slate-200 uppercase drop-shadow">
             <span>PEOPLE</span>
             <span className="text-blue-500">·</span>
             <span>DATA</span>
@@ -166,7 +156,7 @@ export default function LandingPage() {
 
         {/* Right White Login Card Column */}
         <div className="lg:col-span-6 flex justify-center lg:justify-end">
-          <div className="w-full max-w-lg bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-blue-950/40 border border-slate-100 space-y-5">
+          <div className="w-full max-w-lg bg-white/95 backdrop-blur-md text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-slate-950/60 border border-white/40 space-y-5">
             
             {/* Card Header */}
             <div>
@@ -303,7 +293,7 @@ export default function LandingPage() {
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 px-6 py-3 border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-md text-center text-xs text-slate-400">
+      <footer className="relative z-10 px-6 py-3 border-t border-slate-800/60 bg-slate-950/50 backdrop-blur-md text-center text-xs text-slate-400">
         <p>STAR+ Astronaut Health Monitoring System • Built for NASA Space Apps Challenge 2026</p>
       </footer>
     </div>
