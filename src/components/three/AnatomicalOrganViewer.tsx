@@ -483,13 +483,15 @@ function OrganScene({
             }
           : {})}
       />
-      {/* Orbit stays available for every model: it is how you look at the
-          organ, not an annotation of it. */}
+      {/* Orbit controls stay available for partitioned models with selectable sub-structures.
+          For unpartitioned models (like the photoreal heart), 3D viewport interaction is disabled entirely. */}
       <OrbitControls
         ref={controlsRef}
+        enabled={selectable}
         enablePan={false}
-        enableZoom
-        enableDamping
+        enableZoom={selectable}
+        enableRotate={selectable}
+        enableDamping={selectable}
         dampingFactor={0.08}
         rotateSpeed={0.65}
         zoomSpeed={0.8}
@@ -618,15 +620,19 @@ export default function AnatomicalOrganViewer({
         </div>
 
         <div className="flex items-center gap-0.5">
-          <IconButton label="Zoom in" onClick={() => setZoomCommand({ direction: 'in', token: performance.now() })}>
-            <Maximize2 className="h-3.5 w-3.5" />
-          </IconButton>
-          <IconButton label="Zoom out" onClick={() => setZoomCommand({ direction: 'out', token: performance.now() })}>
-            <Minimize2 className="h-3.5 w-3.5" />
-          </IconButton>
-          <IconButton label="Reset camera" onClick={() => setResetToken((t) => t + 1)}>
-            <RotateCcw className="h-3.5 w-3.5" />
-          </IconButton>
+          {selectable && (
+            <>
+              <IconButton label="Zoom in" onClick={() => setZoomCommand({ direction: 'in', token: performance.now() })}>
+                <Maximize2 className="h-3.5 w-3.5" />
+              </IconButton>
+              <IconButton label="Zoom out" onClick={() => setZoomCommand({ direction: 'out', token: performance.now() })}>
+                <Minimize2 className="h-3.5 w-3.5" />
+              </IconButton>
+              <IconButton label="Reset camera" onClick={() => setResetToken((t) => t + 1)}>
+                <RotateCcw className="h-3.5 w-3.5" />
+              </IconButton>
+            </>
+          )}
           {onToggleExpanded && (
             <IconButton label={expanded ? 'Collapse viewer' : 'Expand viewer'} onClick={onToggleExpanded}>
               <Crosshair className="h-3.5 w-3.5" />
@@ -636,7 +642,7 @@ export default function AnatomicalOrganViewer({
       </div>
 
       {/* 3D viewport */}
-      <div className="relative min-h-[300px] flex-1 bg-gradient-to-b from-slate-50 to-white">
+      <div className={`relative min-h-[300px] flex-1 bg-gradient-to-b from-slate-50 to-white ${selectable ? '' : 'pointer-events-none'}`}>
         {error ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
             <AlertTriangle className="h-6 w-6 text-amber-500" aria-hidden="true" />
