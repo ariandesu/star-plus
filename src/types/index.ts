@@ -7,6 +7,10 @@ export interface UserSession {
   title: string;
   avatarUrl?: string;
   isAuthenticated: boolean;
+  password?: string;
+  age?: number;
+  gender?: string;
+  theme?: 'light' | 'dark';
 }
 
 export type HealthStatus = 'STABLE' | 'WATCH' | 'INVESTIGATE' | 'CRITICAL';

@@ -37,6 +37,14 @@ export const authService = {
     return AppState.getSession();
   },
 
+  updateSession(updates: Partial<UserSession>): UserSession | null {
+    const current = AppState.getSession();
+    if (!current) return null;
+    const updated = { ...current, ...updates };
+    AppState.setSession(updated);
+    return updated;
+  },
+
   getRoleDefaultRoute(role: Role): string {
     switch (role) {
       case 'astronaut':
