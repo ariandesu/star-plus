@@ -149,18 +149,23 @@ function resolveOf(groups, name) {
 }
 
 console.log('\nCatalog → structure group coverage');
-const SYSTEM_FILES = {
-  CARDIOVASCULAR: 'VH_M_Heart.glb',
-  RESPIRATORY: 'VH_M_Lung.glb',
-  COGNITIVE: 'Allen_M_Brain.glb',
-  MUSCULOSKELETAL: 'Skeleton.glb',
-  SLEEP: 'Endocrine.glb',
-};
+/**
+ * Derive each system's model file from the catalog source rather than repeating
+ * the filenames here. The hardcoded copy is what silently went stale when the
+ * heart asset was swapped: this test kept asserting against the old file while
+ * the viewer loaded the new one.
+ */
+function fileFor(systemBlock, system) {
+  const m = /file:\s*'([^']+)'/.exec(systemBlock);
+  if (!m) throw new Error(`no file: '...' found in the ${system} catalog block`);
+  return m[1];
+}
 
-for (const [system, file] of Object.entries(SYSTEM_FILES)) {
-  const block = catalogSrc[system];
-  if (!block) {
-    check(`${system} block present in catalog`, false);
+for (const [system, block] of Object.entries(catalogSrc)) {
+  if (!/^\s*system:\s*'/m.test(block)) continue;
+  const file = fileFor(block, system);
+  if (!fs.existsSync(path.join(ORGAN_DIR, file))) {
+    check(`${system}: model file ${file} exists`, false, file);
     continue;
   }
   const groups = parseGroups(block);
@@ -170,6 +175,17 @@ for (const [system, file] of Object.entries(SYSTEM_FILES)) {
     groups.length > 0 && groups[groups.length - 1].isCatchAll,
     `last group: ${groups[groups.length - 1]?.id}`
   );
+
+  // A model without named sub-structures must declare exactly one catch-all
+  // group — no per-part groups that nothing can ever populate.
+  const partitioned = /partitioned:\s*true/.test(block);
+  if (!partitioned) {
+    check(
+      `${system}: unpartitioned model declares a single whole-organ group`,
+      groups.length === 1 && groups[0].isCatchAll,
+      `${groups.length} group(s)`
+    );
+  }
 
   const names = glbNodeNames(file);
   const unmapped = names.filter((n) => resolveOf(groups, n) === null);

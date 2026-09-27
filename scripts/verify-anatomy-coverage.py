@@ -32,12 +32,10 @@ def glb_json(path):
 
 # (group_id, match[], exclude[], is_catch_all)
 GROUPS = {
-    "VH_M_Heart.glb": [
-        ("chambers", ["cardiac_chamber", "cardiac_atrium", "cardiac_ventricle", "ventricle"], ["papillary", "septum"], False),
-        ("septum", ["interventricular_septum", "septum"], ["papillary"], False),
-        ("valves", ["valve"], ["papillary"], False),
-        ("papillary", ["papillary"], [], False),
-        ("other", [], [], True),
+    # Single fused photoreal surface — one whole-organ catch-all, no invented
+    # chamber/valve groups (see src/services/anatomyCatalog.ts).
+    "realistic_human_heart.glb": [
+        ("whole", [], [], True),
     ],
     "VH_M_Lung.glb": [
         ("lobes", ["lobe", "lungs_l", "lungs_r", "hilum"], ["bronch"], False),

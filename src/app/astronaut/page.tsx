@@ -538,26 +538,18 @@ function Telemetry({ label, value }: { label: string; value: string }) {
 /**
  * Structure names per system, used by the 2D fallback. Kept in sync with the
  * GLB node names so the fallback lists the same anatomy as the 3D viewer.
+ *
+ * CARDIOVASCULAR is intentionally empty: the photoreal heart is a single fused
+ * surface whose only node names are Sketchfab/ZBrush scaffolding, so there are
+ * no anatomical structures to list. Listing invented chamber names here would
+ * present anatomy the model does not contain.
  */
 function structureNamesFor(system: OrganSystemKey): string[] {
   return STRUCTURE_INDEX[system];
 }
 
 const STRUCTURE_INDEX: Record<OrganSystemKey, string[]> = {
-  CARDIOVASCULAR: [
-    'VH_M_heart',
-    'VH_M_left_cardiac_atrium',
-    'VH_M_right_cardiac_atrium',
-    'VH_M_heart_left_ventricle',
-    'VH_M_heart_right_ventricle',
-    'VH_M_interventricular_septum',
-    'VH_M_mitral_valve',
-    'VH_M_tricuspid_valve',
-    'VH_M_aortic_valve',
-    'VH_M_pulmonary_valve',
-    'VH_M_papillary_muscle_of_heart_anterior',
-    'VH_M_papillary_muscle_of_heart_posterior',
-  ],
+  CARDIOVASCULAR: [],
   RESPIRATORY: [
     'VH_M_lungs_L',
     'VH_M_lungs_R',
@@ -622,7 +614,9 @@ function AnatomyFallback({
   onSelectSystem: (s: OrganSystemKey) => void;
 }) {
   const definition = ORGAN_DEFINITIONS[system];
-  const groups = partitionStructures(definition, structureNamesFor(system));
+  const groups = definition.partitioned
+    ? partitionStructures(definition, structureNamesFor(system))
+    : {};
 
   return (
     <section
@@ -658,6 +652,15 @@ function AnatomyFallback({
         </div>
 
         <div className="space-y-3">
+          {!definition.partitioned && (
+            <div className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+              <p className="text-[11px] leading-relaxed text-slate-600">
+                {definition.organLabel} is a photoreal single-surface model. The file contains no
+                separately named anatomical parts, so no structure list is shown — nothing here is
+                labelled or isolated.
+              </p>
+            </div>
+          )}
           {definition.groups.map((g) => {
             const list = groups[g.id] ?? [];
             if (!list.length) return null;

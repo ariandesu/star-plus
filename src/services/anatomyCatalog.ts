@@ -4,7 +4,11 @@ import type { OrganSystemKey } from './organHealthService';
  * Anatomy catalog for the 3D organ visualizer.
  *
  * Model sources (all CC BY 4.0, see public/ATTRIBUTION.md):
- *  - Heart / Lung / Spinal cord: Human Reference Atlas (HuBMAP) reference organs
+ *  - Heart: "Realistic Human Heart" by neshallads (Sketchfab). A single fused
+ *    photoreal surface with authored PBR texture maps and no named
+ *    sub-structures, so it is shown as one whole organ (`partitioned: false`)
+ *    rather than being split into invented chambers.
+ *  - Lung / Spinal cord: Human Reference Atlas (HuBMAP) reference organs
  *    v1.2, male (VH_M_*). https://humanatlas.io
  *  - Brain: Allen Human Brain Reference Atlas (Allen_M_Brain).
  *
@@ -50,8 +54,24 @@ export interface OrganDefinition {
   orientation: [number, number, number];
   /** Groups presented in the structure list, in display order. */
   groups: StructureGroup[];
-  /** Id of the group focused when the system is first opened. */
+  /**
+   * Id of the group focused when the system is first opened.
+   *
+   * Only meaningful for partitioned models; unpartitioned ones have a single
+   * whole-organ group.
+   */
   defaultGroup: string;
+  /**
+   * Whether the glTF ships individually named anatomical sub-structures.
+   *
+   * Some models are a single fused surface with no node-level anatomy (the
+   * photoreal heart scan). There is nothing to select, label or isolate in
+   * those, and inventing a chamber/valve breakdown for them would present
+   * anatomy the file does not actually contain — so the viewer drops the
+   * structure panel and the click-to-isolate interaction instead, and shows
+   * the organ as one whole-organ view.
+   */
+  partitioned: boolean;
 }
 
 /** Prefixes stripped from raw node names before display. */
@@ -97,52 +117,22 @@ export function humanizeStructureName(rawName: string): string {
 export const ORGAN_DEFINITIONS: Record<OrganSystemKey, OrganDefinition> = {
   CARDIOVASCULAR: {
     system: 'CARDIOVASCULAR',
-    file: 'VH_M_Heart.glb',
-    modelName: '3D Reference Organ — Heart (male)',
-    source: 'Human Reference Atlas',
+    file: 'realistic_human_heart.glb',
+    modelName: 'Realistic Human Heart',
+    source: 'neshallads (Sketchfab)',
     organLabel: 'Heart',
     accent: '#dc2626',
     orientation: [0, 0, 0],
-    defaultGroup: 'chambers',
+    defaultGroup: 'whole',
+    partitioned: false,
     groups: [
       {
-        id: 'chambers',
-        label: 'Cardiac Chambers',
-        match: ['cardiac_chamber', 'cardiac_atrium', 'cardiac_ventricle', 'ventricle'],
-        exclude: ['papillary', 'septum'],
-        description:
-          'The four chambers. The atria receive venous return and the ventricles generate the pressure that drives pulmonary and systemic circulation.',
-      },
-      {
-        id: 'septum',
-        label: 'Interventricular Septum',
-        match: ['interventricular_septum', 'septum'],
-        exclude: ['papillary'],
-        description:
-          'The muscular and membranous wall separating the ventricles. Septal motion is a direct readout of ventricular contractile synchrony.',
-      },
-      {
-        id: 'valves',
-        label: 'Cardiac Valves',
-        match: ['valve'],
-        exclude: ['papillary'],
-        description:
-          'Mitral, tricuspid, aortic and pulmonary valves. Competence of these leaflets determines the direction of flow through the heart.',
-      },
-      {
-        id: 'papillary',
-        label: 'Papillary Muscles',
-        match: ['papillary'],
-        description:
-          'Muscles anchored to the ventricular wall that tension the chordae tendineae and prevent atrioventricular valve prolapse during systole.',
-      },
-      {
-        id: 'other',
-        label: 'Other Structures',
+        id: 'whole',
+        label: 'Whole Heart',
         isCatchAll: true,
         match: [],
         description:
-          'Remaining structures in this model that are not part of the primary cardiac groups.',
+          'This heart is a single fused photoreal surface, not a set of separate chamber, valve and septum meshes. It is therefore presented as one whole organ and nothing is labelled or isolated on it — the file genuinely contains no sub-structure geometry to point at, and naming fragments of one welded surface would state anatomy the model does not have.',
       },
     ],
   },
@@ -156,6 +146,7 @@ export const ORGAN_DEFINITIONS: Record<OrganSystemKey, OrganDefinition> = {
     accent: '#0284c7',
     orientation: [0, 0, 0],
     defaultGroup: 'lobes',
+    partitioned: true,
     groups: [
       {
         id: 'lobes',
@@ -207,6 +198,7 @@ export const ORGAN_DEFINITIONS: Record<OrganSystemKey, OrganDefinition> = {
     accent: '#7c3aed',
     orientation: [0, 0, 0],
     defaultGroup: 'cortex',
+    partitioned: true,
     groups: [
       {
         id: 'cortex',
@@ -296,6 +288,7 @@ export const ORGAN_DEFINITIONS: Record<OrganSystemKey, OrganDefinition> = {
     accent: '#57534e',
     orientation: [0, 0, 0],
     defaultGroup: 'spine',
+    partitioned: true,
     groups: [
       {
         id: 'spine',
@@ -412,6 +405,7 @@ export const ORGAN_DEFINITIONS: Record<OrganSystemKey, OrganDefinition> = {
     accent: '#4f46e5',
     orientation: [0, 0, 0],
     defaultGroup: 'circadian',
+    partitioned: true,
     groups: [
       {
         id: 'circadian',
@@ -492,7 +486,7 @@ export function matchesGroup(group: StructureGroup, rawNodeName: string): boolea
  * and the camera framing fallback.
  */
 export const HERO_STRUCTURE: Record<OrganSystemKey, string | null> = {
-  CARDIOVASCULAR: 'VH_M_heart',
+  CARDIOVASCULAR: null,
   RESPIRATORY: 'VH_M_lungs',
   COGNITIVE: 'Allen_brain',
   MUSCULOSKELETAL: null,

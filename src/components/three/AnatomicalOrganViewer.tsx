@@ -244,6 +244,14 @@ interface SceneProps {
   reducedMotion: boolean;
   resetToken: number;
   zoomCommand: { direction: 'in' | 'out'; token: number } | null;
+  /**
+   * Whether the model exposes named sub-structures worth picking. An
+   * unpartitioned model is one fused surface, so hover identification and
+   * click-to-select are not attached at all — there is no structure to
+   * identify, and pretending otherwise would let the user "select" the whole
+   * heart and read a fabricated part name.
+   */
+  selectable: boolean;
   onHover: (name: string | null) => void;
   onSelect: (name: string | null) => void;
   onStructures: (names: string[]) => void;
@@ -259,6 +267,7 @@ function OrganScene({
   reducedMotion,
   resetToken,
   zoomCommand,
+  selectable,
   onHover,
   onSelect,
   onStructures,
@@ -456,20 +465,26 @@ function OrganScene({
     <>
       <primitive
         object={gltf.scene}
-        onPointerOver={(e: any) => {
-          e.stopPropagation();
-          if (e.object?.isMesh) onHover(e.object.name || null);
-        }}
-        onPointerOut={(e: any) => {
-          e.stopPropagation();
-          onHover(null);
-        }}
-        onClick={(e: any) => {
-          e.stopPropagation();
-          const name = e.object?.name;
-          if (name) onSelect(name === selected ? null : name);
-        }}
+        {...(selectable
+          ? {
+              onPointerOver: (e: any) => {
+                e.stopPropagation();
+                if (e.object?.isMesh) onHover(e.object.name || null);
+              },
+              onPointerOut: (e: any) => {
+                e.stopPropagation();
+                onHover(null);
+              },
+              onClick: (e: any) => {
+                e.stopPropagation();
+                const name = e.object?.name;
+                if (name) onSelect(name === selected ? null : name);
+              },
+            }
+          : {})}
       />
+      {/* Orbit stays available for every model: it is how you look at the
+          organ, not an annotation of it. */}
       <OrbitControls
         ref={controlsRef}
         enablePan={false}
@@ -508,6 +523,14 @@ export default function AnatomicalOrganViewer({
   reducedMotion = false,
 }: AnatomicalOrganViewerProps) {
   const definition = ORGAN_DEFINITIONS[system];
+  /**
+   * Whether this model has real named sub-structures. When false the model is a
+   * single fused surface (the photoreal heart), so the whole structure panel,
+   * the group filters, the hover label and the isolate control are withheld
+   * instead of offering selections that name something the file does not
+   * contain.
+   */
+  const selectable = definition.partitioned;
   const [isolated, setIsolated] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [hovered, setHovered] = useState<string | null>(null);
@@ -529,7 +552,10 @@ export default function AnatomicalOrganViewer({
     setActiveGroup(null);
   }, [system]);
 
-  const groups = useMemo(() => partitionStructures(definition, names), [definition, names]);
+  const groups = useMemo(
+    () => (selectable ? partitionStructures(definition, names) : {}),
+    [selectable, definition, names]
+  );
 
   const visible = useMemo<Set<string> | null>(() => {
     if (!activeGroup) return null;
@@ -557,11 +583,13 @@ export default function AnatomicalOrganViewer({
     setNames(next);
   }, []);
 
-  const activeName = hovered || selected;
+  const activeName = selectable ? hovered || selected : null;
   const label = activeName ? humanizeStructureName(activeName) : null;
-  const groupCounts = definition.groups
-    .map((g) => ({ group: g, count: (groups[g.id] ?? []).length }))
-    .filter((x) => x.count > 0);
+  const groupCounts = selectable
+    ? definition.groups
+        .map((g) => ({ group: g, count: (groups[g.id] ?? []).length }))
+        .filter((x) => x.count > 0)
+    : [];
 
   return (
     <section
@@ -647,6 +675,7 @@ export default function AnatomicalOrganViewer({
                   reducedMotion={reducedMotion}
                   resetToken={resetToken}
                   zoomCommand={zoomCommand}
+                  selectable={selectable}
                   onHover={setHovered}
                   onSelect={setSelected}
                   onStructures={handleStructures}
@@ -682,7 +711,10 @@ export default function AnatomicalOrganViewer({
         </div>
       </div>
 
-      {/* Structure panel */}
+      {/* Structure panel — only rendered for models that actually carry named
+          sub-structures. A fused single-surface model has nothing to list, so
+          it gets a plain factual note instead of an empty or invented list. */}
+      {selectable ? (
       <div className="relative z-20 border-t border-slate-100 px-3 py-2.5">
         <div className="mb-2 flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-1.5">
@@ -777,6 +809,17 @@ export default function AnatomicalOrganViewer({
           </>
         )}
       </div>
+      ) : (
+        <div className="relative z-20 border-t border-slate-100 px-3 py-2.5">
+          <div className="flex items-start gap-2">
+            <Layers className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+            <p className="text-[10px] leading-relaxed text-slate-500">
+              Photoreal single-surface model · the file contains no separately named anatomical
+              parts, so nothing is labelled or isolated here.
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

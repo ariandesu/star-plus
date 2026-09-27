@@ -26,15 +26,18 @@ ORGAN_DIR = os.path.join(ROOT, "public", "models", "organs")
 # Mirrors src/services/anatomyCatalog.ts. Kept as data so this validator runs
 # without a Node toolchain.
 CATALOG = {
-    "VH_M_Heart.glb": {
-        "budget_mb": 1.0,
+    # Single fused photoreal surface: no named anatomical sub-structures to
+    # map, so the whole model is one catch-all group. The keys are
+    # Sketchfab/ZBrush scaffolding names, not anatomy.
+    "realistic_human_heart.glb": {
+        "budget_mb": 8.0,
         "groups": [
-            ("chambers", ["cardiac_chamber", "cardiac_atrium", "cardiac_ventricle", "ventricle"], ["papillary", "septum"], False),
-            ("septum", ["interventricular_septum", "septum"], ["papillary"], False),
-            ("valves", ["valve"], ["papillary"], False),
-            ("papillary", ["papillary"], [], False),
-            ("other", [], [], True),
+            ("whole", [], [], True),
         ],
+        # Node names here are exporter scaffolding (Sketchfab_model, hart:ZBrush_*),
+        # not source-prefixed anatomical concepts, so the prefix invariant does
+        # not apply to it.
+        "prefix_required": False,
     },
     "VH_M_Lung.glb": {
         "budget_mb": 2.0,
@@ -214,6 +217,8 @@ def main() -> int:
     for fname in CATALOG:
         path = os.path.join(ORGAN_DIR, fname)
         if not os.path.exists(path):
+            continue
+        if CATALOG[fname].get("prefix_required", True) is False:
             continue
         gltf, _ = read_glb(path)
         named = [n.get("name") for n in gltf.get("nodes", []) if n.get("name")]

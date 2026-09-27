@@ -7,40 +7,19 @@ licence.
 
 ---
 
-## 1. Human Reference Atlas (HuBMAP) — Heart, Lungs, Spinal Cord
+## 1. Realistic Human Heart (Sketchfab / neshallads) — Heart
 
-Used for: **Cardiovascular** (heart), **Respiratory** (lungs), and the spinal cord
-reference.
+Used for: **Cardiovascular** (heart).
 
-- Source: HuBMAP Consortium, *Human Reference Atlas (HRA) 3D Reference Organ* set,
-  v1.2, male.
-- Files: `VH_M_Heart.glb`, `VH_M_Lung.glb`, `VH_M_Spinal_Cord.glb`
-- Repository: <https://github.com/hubmapconsortium/ccf-releases> (path `v1.2/models/`)
-- Portal: <https://humanatlas.io> · <https://hubmapconsortium.github.io/ccf/pages/ccf-3d-reference-library.html>
+- Source: "Realistic Human Heart" by neshallads on Sketchfab.
+- File: `realistic_human_heart.glb`
+- Model URL: <https://sketchfab.com/3d-models/realistic-human-heart-3b56a310c85c2d3855ff4acdd4e4d770c0c169eeaa1a1be8284501460395349f>
 - Licence: **Creative Commons Attribution 4.0 International (CC BY 4.0)** —
   <https://creativecommons.org/licenses/by/4.0/>
-- Publication: Börner K. et al. *Anatomical structures, cell types and biomarkers of
-  the Human Reference Atlas.* Nature Cell Biology (2021).
-  <https://doi.org/10.1038/s41556-021-00788-6>
 
-### Structures preserved as individually selectable
+### Structure partitioning
 
-The heart reference carries named sub-structures used by the structure panel and
-isolation control:
-
-| Structure | Node |
-|---|---|
-| Left / right cardiac atrium | `VH_M_left_cardiac_atrium`, `VH_M_right_cardiac_atrium` |
-| Left / right ventricle | `VH_M_heart_left_ventricle`, `VH_M_heart_right_ventricle` |
-| Interventricular septum | `VH_M_interventricular_septum` |
-| Mitral valve | `VH_M_mitral_valve` |
-| Tricuspid valve | `VH_M_tricuspid_valve` |
-| Aortic valve | `VH_M_aortic_valve` |
-| Pulmonary valve | `VH_M_pulmonary_valve` |
-| Papillary muscles (4 named) | `VH_M_papillary_muscle_of_heart_*` |
-
-The lung reference carries 87 named structures: lobes, 20 bronchopulmonary
-segments, the tracheobronchial tree and the supporting cartilages.
+`realistic_human_heart.glb` is a photoreal single-surface model with authored PBR texture maps (base color, roughness, metalness). It is rendered as a whole organ (`partitioned: false`) with standard viewport orbit controls (rotate/zoom/reset). Sub-structure hover, click selection, and mesh isolation highlights are disabled to avoid presenting fabricated structure labels.
 
 ---
 
