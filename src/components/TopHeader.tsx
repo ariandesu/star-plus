@@ -92,40 +92,6 @@ export default function TopHeader({
                 </span>
               </div>
             </Link>
-
-            {/* Horizontal Nav Links */}
-            <nav className="hidden md:flex items-center gap-1 pl-4 border-l border-slate-200/60">
-              <Link
-                href="/astronaut"
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  pathname === '/astronaut'
-                    ? 'bg-blue-50 text-blue-600 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/medical"
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  pathname === '/medical'
-                    ? 'bg-blue-50 text-blue-600 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Health (FMO)
-              </Link>
-              <Link
-                href="/mission-control"
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
-                  pathname === '/mission-control'
-                    ? 'bg-blue-50 text-blue-600 font-bold'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-                }`}
-              >
-                Mission Ops
-              </Link>
-            </nav>
           </div>
 
           {/* Right Header Controls */}
