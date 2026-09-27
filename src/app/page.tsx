@@ -3,14 +3,15 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Shield,
-  UserCheck,
+  User,
+  Lock,
+  Eye,
+  EyeOff,
   Stethoscope,
   Radio,
+  UserCheck,
   ArrowRight,
-  Sparkles,
-  AlertTriangle,
-  Info
+  Shield
 } from 'lucide-react';
 import { authService } from '../services/authService';
 
@@ -19,44 +20,36 @@ export default function LandingPage() {
   const [selectedRole, setSelectedRole] = useState<'ASTRONAUT' | 'MEDICAL' | 'MISSION_CONTROL'>('ASTRONAUT');
   const [username, setUsername] = useState('astronaut01');
   const [password, setPassword] = useState('demo123');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
   const roles = [
     {
       id: 'ASTRONAUT' as const,
-      title: 'Astronaut Portal',
-      user: 'CDR Maya Chen',
+      title: 'Astronaut',
+      desc: 'Access your personal health dashboard',
       username: 'astronaut01',
       pass: 'demo123',
       icon: UserCheck,
-      desc: 'Personal health telemetry, vital trends, workout schedules, and cognitive baseline tests.',
-      route: '/astronaut',
-      badge: 'CDR Maya Chen',
-      gradient: 'from-blue-600 to-sky-500'
+      route: '/astronaut'
     },
     {
       id: 'MEDICAL' as const,
       title: 'Flight Medical Officer',
-      user: 'Dr. Sarah Jenkins',
+      desc: 'Monitor crew health and medical data',
       username: 'medical01',
       pass: 'demo123',
       icon: Stethoscope,
-      desc: 'Real-time crew health triage, biomarker deviation analysis, clinical notes, and intervention decision support.',
-      route: '/medical',
-      badge: 'FMO Dr. Jenkins',
-      gradient: 'from-indigo-600 to-purple-600'
+      route: '/medical'
     },
     {
       id: 'MISSION_CONTROL' as const,
-      title: 'Mission Control Operator',
-      user: 'Flight Director Marcus Vance',
+      title: 'Mission Control',
+      desc: 'Oversee mission operations and crew health status',
       username: 'control01',
       pass: 'demo123',
       icon: Radio,
-      desc: 'Habitat environmental telemetry, spacecraft life support grid, and emergency anomaly simulation.',
-      route: '/mission-control',
-      badge: 'Flight Director',
-      gradient: 'from-emerald-600 to-teal-600'
+      route: '/mission-control'
     }
   ];
 
@@ -78,210 +71,240 @@ export default function LandingPage() {
       };
       router.push(routeMap[selectedRole]);
     } else {
-      setError(res.error || 'Invalid credentials. Please use astronaut01 / medical01 / control01 with demo123.');
+      setError(res.error || 'Invalid credentials. Use astronaut01, medical01, or control01 with demo123.');
     }
   };
 
-  const handleDirectAccess = (username: string, pass: string, route: string) => {
-    authService.login(username, pass);
-    router.push(route);
-  };
-
   return (
-    <div className="min-h-screen bg-[#0B1120] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans">
-      {/* Background Animated Gradient Blobs */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans select-none">
+      
+      {/* Space Horizon & Orbital Sunrise Background Layer */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Orbital Earth Atmosphere Mesh */}
+        <div className="absolute top-1/4 -left-1/4 w-[120%] h-[120%] rounded-[100%] bg-gradient-to-tr from-[#020617] via-[#0D2854] to-[#2563EB] opacity-90 blur-xl transform -rotate-12" />
+        
+        {/* Glow Flares */}
+        <div className="absolute top-1/4 left-1/3 w-[550px] h-[550px] bg-sky-400/20 rounded-full blur-[130px] mix-blend-screen" />
+        <div className="absolute top-1/3 left-1/4 w-[300px] h-[300px] bg-amber-200/15 rounded-full blur-[80px] mix-blend-screen" />
 
-      {/* Top Header */}
-      <header className="px-6 py-5 border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-xl sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+        {/* Moon Orb */}
+        <div className="absolute top-8 right-1/3 w-24 h-24 rounded-full bg-gradient-to-br from-slate-100 via-slate-300 to-slate-600 opacity-60 shadow-2xl blur-[0.5px]" />
+      </div>
+
+      {/* Top Header Navigation */}
+      <header className="relative z-20 px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-800/60 bg-slate-950/40 backdrop-blur-md">
+        <div className="flex items-center gap-6">
+          {/* Logo & Brand Title */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/30">
               <Shield className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h1 className="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
-                STAR<span className="text-blue-400">+</span>
-              </h1>
-              <p className="text-[10px] font-extrabold text-blue-400 uppercase tracking-widest -mt-1">
+              <div className="flex items-center gap-1">
+                <span className="text-lg font-black tracking-tight text-white">STAR</span>
+                <span className="text-lg font-black tracking-tight text-blue-500">PLUS</span>
+              </div>
+              <p className="text-[9px] font-extrabold text-blue-400 uppercase tracking-widest -mt-1">
                 ASTRONAUT HEALTH MONITORING SYSTEM
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-blue-500/10 border border-blue-500/30 text-blue-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              AURORA-1 — SYNTHETIC DEMONSTRATION MISSION
-            </span>
+          {/* Vertical Divider & NASA Space Apps Badge */}
+          <div className="hidden sm:flex items-center gap-4 border-l border-slate-800/80 pl-6 text-xs font-semibold">
+            <div>
+              <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">NASA SPACE APPS</span>
+              <span className="text-white font-extrabold">CHALLENGE 2026</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Mission Badge */}
+        <div className="hidden md:flex items-center gap-3 border-l border-slate-800/80 pl-6 text-xs font-semibold">
+          <div>
+            <span className="text-slate-400 block text-[10px] font-bold uppercase tracking-wider">AURORA-1</span>
+            <span className="text-white font-extrabold">Deep Space Research Mission</span>
           </div>
         </div>
       </header>
 
-      {/* Synthetic Data Disclaimer Banner */}
-      <div className="bg-amber-500/10 border-b border-amber-500/20 px-6 py-2.5 text-center text-xs text-amber-300 flex items-center justify-center gap-2 font-medium">
-        <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0" />
-        <span>Demo environment using synthetic mission data. Not a medical diagnostic system.</span>
-      </div>
-
-      {/* Main Hero & Role Selection Container */}
-      <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      {/* Main Split Layout: Left Hero & Right Floating Login Card */}
+      <main className="relative z-10 flex-1 max-w-7xl mx-auto w-full px-6 sm:px-10 py-6 sm:py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
         
-        {/* Left Hero Column */}
-        <div className="lg:col-span-6 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800/80 border border-slate-700/80 text-xs font-bold text-slate-300 backdrop-blur-md">
-            <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-            <span>NASA SPACE APPS CHALLENGE 2026</span>
+        {/* Left Hero Marketing Column */}
+        <div className="lg:col-span-6 space-y-6 pr-0 lg:pr-6">
+          <div className="space-y-4">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1]">
+              Healthier <br />
+              Missions, <br />
+              <span className="text-blue-500">Brighter Futures.</span>
+            </h1>
+
+            <div className="space-y-1.5 pt-2">
+              <p className="text-base sm:text-lg font-bold text-slate-200">
+                Monitor. Understand. Support.
+              </p>
+              <p className="text-xs sm:text-sm font-medium text-slate-300">
+                For every human, on every mission.
+              </p>
+              {/* Accent Line */}
+              <div className="w-16 h-1 bg-blue-500 rounded-full mt-3" />
+            </div>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl font-black tracking-tight text-white leading-tight">
-            Next-Generation <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-300 to-sky-400">
-              Space Health Intelligence
-            </span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
-            Rule-based physiological telemetry monitoring, predictive biomarker deviation analysis, and decision support systems for human spaceflight missions.
-          </p>
-
-          {/* Role Selection Cards Grid */}
-          <div className="space-y-3 pt-2">
-            <p className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-              Select Operational Role View:
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {roles.map((r) => {
-                const Icon = r.icon;
-                const isSelected = selectedRole === r.id;
-
-                return (
-                  <button
-                    key={r.id}
-                    onClick={() => handleRoleSelect(r.id, r.username, r.pass)}
-                    className={`p-4 rounded-2xl border text-left transition-all duration-200 relative group cursor-pointer ${
-                      isSelected
-                        ? 'bg-slate-800/90 border-blue-500 shadow-lg shadow-blue-500/20 ring-1 ring-blue-500/50'
-                        : 'bg-slate-900/60 border-slate-800 hover:bg-slate-800/60 hover:border-slate-700'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${r.gradient} flex items-center justify-center text-white shadow-md`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      {isSelected && (
-                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-ping" />
-                      )}
-                    </div>
-                    <h3 className="font-extrabold text-sm text-white">{r.title}</h3>
-                    <p className="text-[11px] text-slate-400 font-medium mt-0.5">{r.user}</p>
-                    <p className="text-[10px] text-blue-400 font-mono mt-1">ID: {r.username}</p>
-                  </button>
-                );
-              })}
-            </div>
+          {/* Bottom Left Tagline */}
+          <div className="pt-6 flex flex-wrap items-center gap-2 sm:gap-3 text-[11px] font-extrabold tracking-widest text-slate-300 uppercase">
+            <span>PEOPLE</span>
+            <span className="text-blue-500">·</span>
+            <span>DATA</span>
+            <span className="text-blue-500">·</span>
+            <span>HEALTH</span>
+            <span className="text-blue-500">·</span>
+            <span className="text-blue-400">FURTHER TOGETHER</span>
           </div>
         </div>
 
-        {/* Right Authentication Form Column */}
-        <div className="lg:col-span-6 flex justify-center">
-          <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800/90 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
+        {/* Right White Login Card Column */}
+        <div className="lg:col-span-6 flex justify-center lg:justify-end">
+          <div className="w-full max-w-lg bg-white text-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl shadow-blue-950/40 border border-slate-100 space-y-5">
+            
+            {/* Card Header */}
             <div>
-              <div className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-blue-500/20 text-blue-400 mb-2">
-                DEMO AUTHENTICATION
-              </div>
-              <h2 className="text-xl font-bold text-white tracking-tight">Access Health Console</h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Select a role card above to prefill demo credentials.
+              <p className="text-xs font-bold text-slate-500">Welcome to</p>
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 mt-0.5">
+                STAR <span className="text-blue-600">PLUS</span>
+              </h2>
+              <p className="text-xs text-slate-500 font-medium mt-0.5">
+                Astronaut Health Monitoring System
               </p>
+              <div className="w-12 h-1 bg-blue-500 rounded-full mt-2.5" />
             </div>
 
+            {/* Role Selection Section */}
+            <div className="space-y-2">
+              <div>
+                <h3 className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
+                  Select your mission role
+                </h3>
+                <p className="text-[11px] text-slate-500 font-medium">
+                  Choose a role to load demo credentials
+                </p>
+              </div>
+
+              {/* 3 Horizontal Role Cards */}
+              <div className="grid grid-cols-3 gap-2">
+                {roles.map((r) => {
+                  const Icon = r.icon;
+                  const isSelected = selectedRole === r.id;
+
+                  return (
+                    <button
+                      key={r.id}
+                      type="button"
+                      onClick={() => handleRoleSelect(r.id, r.username, r.pass)}
+                      className={`p-2.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between cursor-pointer min-h-[95px] ${
+                        isSelected
+                          ? 'bg-blue-50/90 border-2 border-blue-500 shadow-sm'
+                          : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mb-1.5">
+                        <Icon className="w-3.5 h-3.5 stroke-[2.2]" />
+                      </div>
+                      <div>
+                        <h4 className="font-extrabold text-[11px] sm:text-xs text-slate-900 leading-tight">
+                          {r.title}
+                        </h4>
+                        <p className="text-[9px] sm:text-[10px] text-slate-500 leading-tight mt-0.5 line-clamp-2 font-medium">
+                          {r.desc}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Error Banner */}
             {error && (
-              <div className="p-3 rounded-xl bg-rose-500/20 border border-rose-500/40 text-rose-300 text-xs font-semibold">
+              <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 text-xs font-bold">
                 {error}
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Astronaut / Officer ID
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-3.5">
+              {/* Username Input */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Username
                 </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="e.g. astronaut01, medical01, control01"
-                  required
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <User className="w-4 h-4" />
+                  </div>
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="w-full bg-slate-100/90 border border-transparent rounded-xl pl-10 pr-4 py-2.5 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+                    placeholder="Username"
+                    required
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5">
-                  Security Passkey
+              {/* Password Input */}
+              <div className="space-y-1">
+                <label className="block text-xs font-bold text-slate-700">
+                  Password
                 </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  placeholder="demo123"
-                  required
-                />
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-slate-100/90 border border-transparent rounded-xl pl-10 pr-10 py-2.5 text-xs font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition"
+                    placeholder="Password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
-              <div className="text-[11px] text-slate-400 bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-2">
-                <Info className="w-4 h-4 text-blue-400 flex-shrink-0" />
-                <span>Demo Passkey: <strong className="text-white font-mono">demo123</strong></span>
-              </div>
-
+              {/* Primary Action Button */}
               <button
                 type="submit"
-                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 hover:from-blue-500 hover:to-sky-400 text-white font-extrabold text-xs tracking-wider uppercase shadow-lg shadow-blue-600/30 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3 px-6 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-black text-sm tracking-wide shadow-lg shadow-blue-500/30 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mt-1"
               >
-                <span>LOGIN TO DASHBOARD</span>
-                <ArrowRight className="w-4 h-4" />
+                <span>Login</span>
+                <ArrowRight className="w-4 h-4 stroke-[2.5]" />
               </button>
             </form>
 
-            {/* Quick Demo Access Buttons */}
-            <div className="pt-4 border-t border-slate-800/80 text-center space-y-2">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                Direct One-Click Demo Views:
-              </p>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => handleDirectAccess('astronaut01', 'demo123', '/astronaut')}
-                  className="py-1.5 px-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-xs font-bold text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer"
-                >
-                  Astronaut
-                </button>
-                <button
-                  onClick={() => handleDirectAccess('medical01', 'demo123', '/medical')}
-                  className="py-1.5 px-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-xs font-bold text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer"
-                >
-                  Medical
-                </button>
-                <button
-                  onClick={() => handleDirectAccess('control01', 'demo123', '/mission-control')}
-                  className="py-1.5 px-2 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-xs font-bold text-slate-300 hover:text-white border border-slate-700/80 transition cursor-pointer"
-                >
-                  Control
-                </button>
-              </div>
+            {/* Card Footer Note */}
+            <div className="pt-1 text-center flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400">
+              <Lock className="w-3.5 h-3.5 text-slate-400" />
+              <span>Demo Environment | Credentials are pre-configured for this demo</span>
             </div>
+
           </div>
         </div>
 
       </main>
 
       {/* Footer */}
-      <footer className="px-6 py-4 border-t border-slate-800/80 bg-slate-900/60 text-center text-xs text-slate-400 space-y-1">
+      <footer className="relative z-10 px-6 py-3 border-t border-slate-800/60 bg-slate-950/40 backdrop-blur-md text-center text-xs text-slate-400">
         <p>STAR+ Astronaut Health Monitoring System • Built for NASA Space Apps Challenge 2026</p>
-        <p className="text-[11px] text-slate-500">Demo environment using synthetic mission data. Not a medical diagnostic system.</p>
       </footer>
     </div>
   );
