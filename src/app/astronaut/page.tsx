@@ -147,7 +147,7 @@ export default function AstronautDashboard() {
   if (!astronaut || !view) return null;
 
   return (
-    <RouteGuard allow={['astronaut', 'medical', 'mission-control']}>
+    <RouteGuard allow={['astronaut']}>
       <div className="flex min-h-screen flex-col bg-[#F5F7FA] font-sans text-slate-900">
       <TopHeader
         session={session}

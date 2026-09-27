@@ -175,7 +175,7 @@ export default function MissionEnvironmentScene({
           <span className="text-sm font-black text-slate-900">{cabinPressure} kPa</span>
         </div>
         <div className="bg-white/90 backdrop-blur-md p-2.5 rounded-2xl border border-slate-100 shadow-2xs">
-          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">O2 SATURATION</span>
+          <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider block">O2 CONCENTRATION</span>
           <span className="text-sm font-black text-slate-900">{o2Percentage}%</span>
         </div>
         <div className="bg-white/90 backdrop-blur-md p-2.5 rounded-2xl border border-slate-100 shadow-2xs">

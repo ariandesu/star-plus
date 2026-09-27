@@ -94,7 +94,7 @@ export default function MedicalPage() {
   });
 
   return (
-    <RouteGuard allow={['medical', 'mission-control']}>
+    <RouteGuard allow={['medical']}>
       <div className="min-h-screen bg-[#F4F7FC] text-slate-900 font-sans flex flex-col">
       
       {/* Top Header matching reference layout */}
