@@ -95,8 +95,8 @@ export default function AstronautDashboard() {
   // the astronaut's own baseline, so switching systems or crew keeps 3D, metrics,
   // analysis and signal consistent with one another.
   const view = useMemo(
-    () => (astronaut ? buildOrganHealthView(astronaut, selectedSystem) : null),
-    [astronaut, selectedSystem]
+    () => (astronaut ? buildOrganHealthView(astronaut, selectedSystem, timeHorizon) : null),
+    [astronaut, selectedSystem, timeHorizon]
   );
 
   /**
@@ -111,11 +111,11 @@ export default function AstronautDashboard() {
 
     // Anchor each system's series on its own headline metric magnitude.
     const anchor: Record<OrganSystemKey, number> = {
-      CARDIOVASCULAR: astronaut.currentVitals?.heartRate ?? baseline.heartRate + 5,
-      RESPIRATORY: 14,
-      COGNITIVE: 268,
-      MUSCULOSKELETAL: 0.98,
-      SLEEP: astronaut.currentVitals?.sleepDuration ?? baseline.sleepHours - 2.7,
+      CARDIOVASCULAR: parseFloat(view.headline.value) || (astronaut.currentVitals?.heartRate ?? baseline.heartRate + 5),
+      RESPIRATORY: parseFloat(view.headline.value) || 14,
+      COGNITIVE: parseFloat(view.headline.value) || 268,
+      MUSCULOSKELETAL: parseFloat(view.headline.value) || 0.98,
+      SLEEP: parseFloat(view.headline.value) || (astronaut.currentVitals?.sleepDuration ?? baseline.sleepHours - 2.7),
     };
     const value = anchor[selectedSystem];
     // Relative amplitude differs by metric: sleep hours vary more than BMD.
