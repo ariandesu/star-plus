@@ -366,11 +366,11 @@ function OrganScene({
     };
   }, [entries, hovered, selected, reducedMotion, selectable]);
 
-  // Static slow left-to-right rotation animation for all realistic 3D models.
+  // Gentle turntable rotation when idle; pauses during hover/inspection for steady examination.
   useFrame((state) => {
-    if (reducedMotion || !gltf.scene) return;
+    if (reducedMotion || !gltf.scene || hovered || selected) return;
     const time = state.clock.getElapsedTime();
-    gltf.scene.rotation.y = Math.sin(time * 0.45) * 0.35;
+    gltf.scene.rotation.y = Math.sin(time * 0.35) * 0.25;
   });
 
   /**
@@ -472,33 +472,27 @@ function OrganScene({
     <>
       <primitive
         object={gltf.scene}
-        {...(selectable
-          ? {
-              onPointerOver: (e: any) => {
-                e.stopPropagation();
-                if (e.object?.isMesh) onHover(e.object.name || null);
-              },
-              onPointerOut: (e: any) => {
-                e.stopPropagation();
-                onHover(null);
-              },
-              onClick: (e: any) => {
-                e.stopPropagation();
-                const name = e.object?.name;
-                if (name) onSelect(name === selected ? null : name);
-              },
-            }
-          : {})}
+        onPointerOver={(e: any) => {
+          e.stopPropagation();
+          onHover(definition.organLabel);
+        }}
+        onPointerOut={(e: any) => {
+          e.stopPropagation();
+          onHover(null);
+        }}
+        onClick={(e: any) => {
+          e.stopPropagation();
+          onSelect(selected ? null : definition.organLabel);
+        }}
       />
-      {/* Orbit controls stay available for partitioned models with selectable sub-structures.
-          For unpartitioned models (like the photoreal heart), 3D viewport interaction is disabled entirely. */}
+      {/* Orbit controls: rotate, pan and zoom across the organ volume */}
       <OrbitControls
         ref={controlsRef}
-        enabled={selectable}
-        enablePan={false}
-        enableZoom={selectable}
-        enableRotate={selectable}
-        enableDamping={selectable}
+        enabled={true}
+        enablePan={true}
+        enableZoom={true}
+        enableRotate={true}
+        enableDamping={true}
         dampingFactor={0.08}
         rotateSpeed={0.65}
         zoomSpeed={0.8}
@@ -592,8 +586,8 @@ export default function AnatomicalOrganViewer({
     setNames(next);
   }, []);
 
-  const activeName = selectable ? hovered || selected : null;
-  const label = activeName ? humanizeStructureName(activeName) : null;
+  const activeName = hovered || selected || null;
+  const label = activeName ? (selectable ? humanizeStructureName(activeName) : `${definition.organLabel} Anatomy`) : null;
   const groupCounts = selectable
     ? definition.groups
         .map((g) => ({ group: g, count: (groups[g.id] ?? []).length }))
@@ -627,19 +621,15 @@ export default function AnatomicalOrganViewer({
         </div>
 
         <div className="flex items-center gap-0.5">
-          {selectable && (
-            <>
-              <IconButton label="Zoom in" onClick={() => setZoomCommand({ direction: 'in', token: performance.now() })}>
-                <Maximize2 className="h-3.5 w-3.5" />
-              </IconButton>
-              <IconButton label="Zoom out" onClick={() => setZoomCommand({ direction: 'out', token: performance.now() })}>
-                <Minimize2 className="h-3.5 w-3.5" />
-              </IconButton>
-              <IconButton label="Reset camera" onClick={() => setResetToken((t) => t + 1)}>
-                <RotateCcw className="h-3.5 w-3.5" />
-              </IconButton>
-            </>
-          )}
+          <IconButton label="Zoom in" onClick={() => setZoomCommand({ direction: 'in', token: performance.now() })}>
+            <Maximize2 className="h-3.5 w-3.5" />
+          </IconButton>
+          <IconButton label="Zoom out" onClick={() => setZoomCommand({ direction: 'out', token: performance.now() })}>
+            <Minimize2 className="h-3.5 w-3.5" />
+          </IconButton>
+          <IconButton label="Reset camera" onClick={() => setResetToken((t) => t + 1)}>
+            <RotateCcw className="h-3.5 w-3.5" />
+          </IconButton>
           {onToggleExpanded && (
             <IconButton label={expanded ? 'Collapse viewer' : 'Expand viewer'} onClick={onToggleExpanded}>
               <Crosshair className="h-3.5 w-3.5" />
@@ -649,7 +639,7 @@ export default function AnatomicalOrganViewer({
       </div>
 
       {/* 3D viewport */}
-      <div className={`relative min-h-[300px] flex-1 bg-gradient-to-b from-slate-50 to-white ${selectable ? '' : 'pointer-events-none'}`}>
+      <div className="relative min-h-[300px] flex-1 bg-gradient-to-b from-slate-50 to-white cursor-grab active:cursor-grabbing">
         {error ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 p-6 text-center">
             <AlertTriangle className="h-6 w-6 text-amber-500" aria-hidden="true" />
@@ -824,12 +814,16 @@ export default function AnatomicalOrganViewer({
       </div>
       ) : (
         <div className="relative z-20 border-t border-slate-100 px-3 py-2.5">
-          <div className="flex items-start gap-2">
-            <Layers className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
-            <p className="text-[10px] leading-relaxed text-slate-500">
-              Photoreal single-surface model · the file contains no separately named anatomical
-              parts, so nothing is labelled or isolated here.
-            </p>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Layers className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden="true" />
+              <p className="text-[10px] font-medium leading-relaxed text-slate-600">
+                {definition.organLabel} Anatomy • 360° Interactive 3D Orbit View
+              </p>
+            </div>
+            <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+              Interactive 3D
+            </span>
           </div>
         </div>
       )}
