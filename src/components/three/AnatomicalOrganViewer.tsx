@@ -366,12 +366,63 @@ function OrganScene({
     };
   }, [entries, hovered, selected, reducedMotion, selectable]);
 
-  // Gentle turntable rotation when idle; pauses during hover/inspection for steady examination.
+  // Biological organ dynamics (cardiac pulse for heart, tidal breathing for lungs) & gentle idle turntable rotation
   useFrame((state) => {
-    if (reducedMotion || !gltf.scene || hovered || selected) return;
+    if (!gltf.scene) return;
     const time = state.clock.getElapsedTime();
-    gltf.scene.rotation.y = Math.sin(time * 0.35) * 0.25;
+
+    // 1. Gentle turntable rotation when idle (pauses during hover/inspection for steady examination)
+    if (!reducedMotion && !hovered && !selected) {
+      gltf.scene.rotation.y = Math.sin(time * 0.35) * 0.25;
+    }
+
+    // 2. Realistic biological breathing & heartbeat animations
+    if (!reducedMotion) {
+      if (system === 'CARDIOVASCULAR') {
+        // Anatomical cardiac cycle: "lub-dub" double pulse at ~72 BPM
+        const cycle = (time * 1.2) % 1.0;
+        let pulse = 0;
+        if (cycle < 0.15) {
+          // Atrial systole (first beat)
+          pulse = Math.sin((cycle / 0.15) * Math.PI) * 0.045;
+        } else if (cycle >= 0.18 && cycle < 0.34) {
+          // Ventricular systole (second beat)
+          pulse = Math.sin(((cycle - 0.18) / 0.16) * Math.PI) * 0.028;
+        }
+        // Anisotropic myocardial contraction & expansion
+        gltf.scene.scale.set(
+          1 + pulse * 1.15,
+          1 - pulse * 0.45,
+          1 + pulse * 1.15
+        );
+      } else if (system === 'RESPIRATORY') {
+        // Anatomical pulmonary breathing: smooth tidal inspiration and expiration (~15 breaths/min)
+        const breathCycle = (Math.sin(time * 1.4) + 1) / 2; // 0 to 1 smooth wave
+        // Inhalation expands lateral and anterior-posterior chest volume
+        const expandX = breathCycle * 0.07;
+        const expandY = breathCycle * 0.038;
+        const expandZ = breathCycle * 0.06;
+        gltf.scene.scale.set(
+          1 + expandX,
+          1 + expandY,
+          1 + expandZ
+        );
+      } else {
+        gltf.scene.scale.set(1, 1, 1);
+      }
+    } else {
+      gltf.scene.scale.set(1, 1, 1);
+    }
   });
+
+  useEffect(() => {
+    return () => {
+      if (gltf.scene) {
+        gltf.scene.scale.set(1, 1, 1);
+        gltf.scene.rotation.set(0, 0, 0);
+      }
+    };
+  }, [gltf.scene, system]);
 
   /**
    * The region the camera should be looking at: the isolated structure when one
@@ -821,9 +872,23 @@ export default function AnatomicalOrganViewer({
                 {definition.organLabel} Anatomy • 360° Interactive 3D Orbit View
               </p>
             </div>
-            <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
-              Interactive 3D
-            </span>
+            <div className="flex items-center gap-1.5">
+              {system === 'CARDIOVASCULAR' && (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-100">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+                  Cardiac Pulse Active
+                </span>
+              )}
+              {system === 'RESPIRATORY' && (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-500 animate-pulse" />
+                  Tidal Breathing Active
+                </span>
+              )}
+              <span className="text-[10px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+                Interactive 3D
+              </span>
+            </div>
           </div>
         </div>
       )}
