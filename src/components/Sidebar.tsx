@@ -15,7 +15,8 @@ import {
   AlertTriangle,
   Stethoscope,
   X,
-  Sparkles
+  Sparkles,
+  HeartPulse
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -25,6 +26,7 @@ interface SidebarProps {
 
 const NAV_ITEMS = [
   { label: 'Overview', href: '/astronaut', icon: LayoutDashboard },
+  { label: 'Daily Wellness', href: '/astronaut/wellness', icon: HeartPulse },
   { label: 'Crew Health', href: '/medical', icon: Users },
   { label: 'Individual Analysis', href: '/astronaut', icon: UserCheck },
   { label: 'Mission Control', href: '/mission-control', icon: Activity },

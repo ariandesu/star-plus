@@ -20,6 +20,7 @@ import type { OrganSystemKey } from '@/services/organHealthService';
 import { ORGAN_DEFINITIONS, humanizeStructureName, partitionStructures } from '@/services/anatomyCatalog';
 import { useWebGLSupport, usePrefersReducedMotion } from '@/hooks/useWebGLSupport';
 import { HealthMetricDetail, UserSession } from '@/types';
+import Link from 'next/link';
 import {
   Activity,
   AlertTriangle,
@@ -28,9 +29,11 @@ import {
   Clock,
   Dumbbell,
   Heart,
+  HeartPulse,
   Layers,
   Moon,
   Shield,
+  Sparkles,
   TrendingUp,
   Wind,
 } from 'lucide-react';
@@ -160,6 +163,34 @@ export default function AstronautDashboard() {
       />
 
       <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-5 p-4 sm:p-5 lg:p-7">
+        {/* Daily Wellness Check Banner */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-md shadow-blue-600/20">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shrink-0">
+              <HeartPulse className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-extrabold text-white">Daily Astronaut Wellness Check</h3>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-slate-950 uppercase tracking-wider">
+                  Day {astronaut.missionDay}
+                </span>
+              </div>
+              <p className="text-xs text-blue-100 font-medium mt-0.5">
+                Quick 1-minute subjective check-in (sleep quality, body soreness, mood & water intake).
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/astronaut/wellness"
+            className="px-5 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-blue-700 font-extrabold text-xs shadow-xs hover:scale-105 active:scale-95 transition flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+          >
+            <Sparkles className="w-4 h-4 text-blue-600" />
+            <span>Complete Wellness Check</span>
+          </Link>
+        </div>
+
         <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
           {/* ---------------- LEFT: 3D anatomy + organ focus ---------------- */}
           <div className={`space-y-5 ${viewerExpanded ? 'lg:col-span-12' : 'lg:col-span-5'}`}>

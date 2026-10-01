@@ -155,3 +155,28 @@ export interface InterventionLog {
   status: 'Completed' | 'Pending';
   notes?: string;
 }
+
+export interface DailyWellnessLog {
+  id: string;
+  timestamp: string;
+  missionDay: number;
+  astronautId: string;
+  astronautName: string;
+  sleepHours: number;
+  sleepQuality: 'Great' | 'Okay' | 'Restless' | 'Poor';
+  headSinus: 'None' | 'A Little' | 'A Lot';
+  backSpine: 'None' | 'A Little' | 'A Lot';
+  stomachNausea: 'None' | 'A Little' | 'A Lot';
+  energyLevel: number;
+  mood: 'Energetic' | 'Happy' | 'Calm' | 'Tired' | 'Stressed';
+  waterGlasses: number;
+  ateAllMeals: boolean;
+  didExercise: boolean;
+  vitalsSnapshot?: {
+    heartRate: number;
+    spO2: number;
+    hrv: number;
+  };
+  notes?: string;
+  status: 'SUBMITTED' | 'DRAFT';
+}
