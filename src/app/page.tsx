@@ -64,12 +64,10 @@ export default function LandingPage() {
     if (e) e.preventDefault();
     const res = authService.login(username, password);
     if (res.success && res.session) {
-      const routeMap = {
-        'ASTRONAUT': '/astronaut',
-        'MEDICAL': '/medical',
-        'MISSION_CONTROL': '/mission-control'
-      };
-      router.push(routeMap[selectedRole]);
+      // Use the actual session role for routing, not the UI-selected role
+      // This ensures correct redirect even if state is stale or user typed credentials manually
+      const targetRoute = authService.getRoleDefaultRoute(res.session.role);
+      router.push(targetRoute);
     } else {
       setError(res.error || 'Invalid credentials. Use astronaut01, medical01, or control01 with demo123.');
     }
