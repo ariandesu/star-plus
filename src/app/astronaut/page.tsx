@@ -6,6 +6,7 @@ import TopHeader from '@/components/TopHeader';
 import RouteGuard from '@/components/RouteGuard';
 import MetricDetailModal from '@/components/MetricDetailModal';
 import AnalysisModal from '@/components/AnalysisModal';
+import AstronautHealthGuideCard from '@/components/AstronautHealthGuideCard';
 import { healthService } from '@/services/healthService';
 import { alertService } from '@/services/alertService';
 import { analysisService } from '@/services/analysisService';
@@ -251,6 +252,12 @@ export default function AstronautDashboard() {
                 ))}
               </ul>
             </div>
+
+            {/* Card C: Today's Health Summary (Mascot Guide & Wellness Check) */}
+            <AstronautHealthGuideCard
+              astronaut={astronaut}
+              onOpenDetailedView={() => setIsAnalysisOpen(true)}
+            />
           </div>
 
           {/* ---------------- RIGHT: telemetry, signals ---------------- */}
@@ -505,36 +512,6 @@ export default function AstronautDashboard() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Daily Wellness Check Card - Mid-page, visible but not dominating */}
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-5 lg:px-7">
-          <Link
-            href="/astronaut/wellness"
-            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 sm:p-5 rounded-2xl bg-white border border-slate-200/80 shadow-sm hover:shadow-md hover:border-slate-300/80 transition-all duration-200 cursor-pointer"
-          >
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shrink-0 shadow-sm shadow-blue-500/20">
-                <HeartPulse className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-extrabold text-slate-900">Daily Astronaut Wellness Check</h3>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-800 uppercase tracking-wider">
-                    Day {astronaut.missionDay}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  Quick 1-minute subjective check-in (sleep quality, body soreness, mood & water intake).
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="hidden sm:inline text-xs font-semibold text-slate-500">Tap to open</span>
-              <Sparkles className="w-4 h-4 text-blue-500" />
-            </div>
-          </Link>
         </div>
 
       </main>
