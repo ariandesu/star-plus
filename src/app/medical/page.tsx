@@ -6,6 +6,7 @@ import TopHeader from '@/components/TopHeader';
 import RouteGuard from '@/components/RouteGuard';
 import AnalysisModal from '@/components/AnalysisModal';
 import MetricDetailModal from '@/components/MetricDetailModal';
+import DoctorHealthOverviewCard from '@/components/DoctorHealthOverviewCard';
 import type { OrganSystemKey } from '@/services/organHealthService';
 import { ORGAN_SYSTEM_ACCENT } from '@/services/organHealthService';
 
@@ -179,6 +180,9 @@ export default function MedicalPage() {
                   accent={ORGAN_SYSTEM_ACCENT[selectedSystem]}
                 />
               </div>
+
+              {/* All Astronauts Health Overview Doctor Guide Card */}
+              <DoctorHealthOverviewCard />
 
               {/* Crew Roster Quick Target Selector */}
               <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
