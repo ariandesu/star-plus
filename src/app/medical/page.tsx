@@ -185,9 +185,6 @@ export default function MedicalPage() {
               {/* All Astronauts Health Overview Doctor Guide Card */}
               <DoctorHealthOverviewCard />
 
-              {/* NASA OSDR Biological Health Analytics Card */}
-              <MedicalNasaMlAnalyticsCard />
-
               {/* Crew Roster Quick Target Selector */}
               <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
                 <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
@@ -377,6 +374,11 @@ export default function MedicalPage() {
                 </div>
               </div>
 
+            </div>
+
+            {/* NASA OSDR Biological Health Analytics Card */}
+            <div className="mt-6">
+              <MedicalNasaMlAnalyticsCard />
             </div>
 
           </div>

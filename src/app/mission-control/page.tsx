@@ -214,9 +214,6 @@ export default function MissionControlDashboard() {
               />
             </div>
 
-            {/* NASA OSDR Mission Control ML Telemetry Card */}
-            <MissionControlNasaMlTelemetryCard />
-
           </div>
 
           {/* ========================================================= */}
@@ -342,6 +339,11 @@ export default function MissionControlDashboard() {
           </div>
 
         </div>
+
+        {/* NASA OSDR Mission Control ML Telemetry Card */}
+        <section className="mt-6 w-full">
+          <MissionControlNasaMlTelemetryCard />
+        </section>
 
       </main>
 

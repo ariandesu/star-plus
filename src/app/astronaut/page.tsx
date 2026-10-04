@@ -259,9 +259,6 @@ export default function AstronautDashboard() {
               astronaut={astronaut}
               onOpenDetailedView={() => setIsAnalysisOpen(true)}
             />
-
-            {/* Card D: NASA OSDR Biomarker ML Risk Prediction */}
-            <AstronautNasaMlCard astronautId={astronaut.id} />
           </div>
 
           {/* ---------------- RIGHT: telemetry, signals ---------------- */}
@@ -517,6 +514,11 @@ export default function AstronautDashboard() {
             </div>
           </div>
         </div>
+
+        {/* NASA OSDR Biomarker ML Risk Prediction & In-Flight Simulation */}
+        <section className="w-full">
+          <AstronautNasaMlCard astronautId={astronaut.id} />
+        </section>
 
       </main>
 
