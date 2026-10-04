@@ -7,6 +7,11 @@ import TopHeader from '../../components/TopHeader';
 import MissionEnvironmentScene from '../../components/three/MissionEnvironmentScene';
 import AnalysisModal from '../../components/AnalysisModal';
 import MetricDetailModal from '../../components/MetricDetailModal';
+import MissionPhasesTimelineCard from '../../components/MissionPhasesTimelineCard';
+import MissionObjectivesCard from '../../components/MissionObjectivesCard';
+import MissionQuickActionsCard from '../../components/MissionQuickActionsCard';
+import MissionTimelineAlertsCard from '../../components/MissionTimelineAlertsCard';
+import MissionControlNotesCard from '../../components/MissionControlNotesCard';
 import { healthService } from '../../services/healthService';
 import { alertService } from '../../services/alertService';
 import { MOCK_ENVIRONMENT } from '../../data/mockData';
@@ -184,6 +189,16 @@ export default function MissionControlDashboard() {
               </button>
             </div>
 
+            {/* Mission Phases & Objectives / Quick Actions */}
+            <MissionPhasesTimelineCard />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <MissionObjectivesCard />
+              <MissionQuickActionsCard
+                onSimulateAnomaly={() => setIsEmergencyMode(!isEmergencyMode)}
+                onRunDiagnostics={() => handleOpenSignal('maya-chen')}
+              />
+            </div>
+
           </div>
 
           {/* ========================================================= */}
@@ -301,6 +316,10 @@ export default function MissionControlDashboard() {
                 </div>
               </div>
             </div>
+
+            {/* Mission Timeline Alerts & Control Notes */}
+            <MissionTimelineAlertsCard />
+            <MissionControlNotesCard />
 
           </div>
 
