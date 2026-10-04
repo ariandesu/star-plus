@@ -4,7 +4,21 @@ import RouteGuard from '@/components/RouteGuard';
 
 import React, { useState, useEffect } from 'react';
 import TopHeader from '../../components/TopHeader';
-import MissionEnvironmentScene from '../../components/three/MissionEnvironmentScene';
+import dynamic from 'next/dynamic';
+const MissionEnvironmentScene = dynamic(
+  () => import('../../components/three/MissionEnvironmentScene'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="relative w-full h-[320px] bg-gradient-to-b from-slate-900 via-slate-950 to-blue-950/40 rounded-3xl border border-slate-800 p-4 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-2">
+          <div className="w-8 h-8 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-blue-300 font-mono">INITIALIZING TELEMETRY SCENE...</span>
+        </div>
+      </div>
+    )
+  }
+);
 import AnalysisModal from '../../components/AnalysisModal';
 import MetricDetailModal from '../../components/MetricDetailModal';
 import MissionPhasesTimelineCard from '../../components/MissionPhasesTimelineCard';

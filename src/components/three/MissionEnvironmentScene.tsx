@@ -1,44 +1,139 @@
 'use client';
 
-import React, { Suspense, useRef, useEffect } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, useGLTF } from '@react-three/drei';
+import React, { Suspense, useRef, useEffect, useMemo } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { OrbitControls, useGLTF, useProgress, Html } from '@react-three/drei';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import * as THREE from 'three';
+
+/**
+ * Image-based PBR studio environment generated procedurally via RoomEnvironment.
+ */
+function StudioEnvironment({ intensity = 0.65 }: { intensity?: number }) {
+  const gl = useThree((state) => state.gl);
+  const scene = useThree((state) => state.scene);
+
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const room = new RoomEnvironment();
+    const target = pmrem.fromScene(room, 0.04);
+    scene.environment = target.texture;
+    scene.environmentIntensity = intensity;
+    room.dispose?.();
+    pmrem.dispose();
+
+    return () => {
+      scene.environment = null;
+      target.texture.dispose();
+    };
+  }, [gl, scene, intensity]);
+
+  return null;
+}
+
+/**
+ * Radar / Wireframe sphere loading fallback displayed in 3D scene while GLB loads.
+ */
+function LoadingFallback() {
+  const { progress } = useProgress();
+  const wireframeRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+
+  useFrame((_, delta) => {
+    if (wireframeRef.current) {
+      wireframeRef.current.rotation.y += delta * 0.6;
+      wireframeRef.current.rotation.x += delta * 0.2;
+    }
+    if (ringRef.current) {
+      ringRef.current.rotation.z -= delta * 0.4;
+    }
+  });
+
+  return (
+    <group>
+      {/* Sleek 3D wireframe radar sphere */}
+      <mesh ref={wireframeRef}>
+        <icosahedronGeometry args={[1.2, 2]} />
+        <meshBasicMaterial wireframe color="#38bdf8" transparent opacity={0.35} />
+      </mesh>
+      {/* Orbital radar ring */}
+      <mesh ref={ringRef} rotation-x={Math.PI / 3}>
+        <torusGeometry args={[1.65, 0.015, 16, 64]} />
+        <meshBasicMaterial color="#0284c7" transparent opacity={0.6} />
+      </mesh>
+      <Html center>
+        <div className="flex flex-col items-center justify-center pointer-events-none select-none text-center whitespace-nowrap bg-slate-950/85 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-cyan-500/40 shadow-xl shadow-cyan-950/50">
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span className="text-[11px] font-mono font-bold tracking-wider text-cyan-300 uppercase">
+              CALIBRATING ORBITAL TELEMETRY... {Math.round(progress)}%
+            </span>
+          </div>
+          <div className="w-52 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-cyan-900/60 p-0.5">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-200"
+              style={{ width: `${Math.max(5, progress)}%` }}
+            />
+          </div>
+        </div>
+      </Html>
+    </group>
+  );
+}
 
 function ShuttleModel() {
   const { scene } = useGLTF('/models/space_shuttle_discovery.glb');
   const groupRef = useRef<THREE.Group>(null);
 
-  useEffect(() => {
-    if (!scene) return;
-    scene.traverse((child) => {
+  const clonedScene = useMemo(() => {
+    if (!scene) return null;
+    const cloned = scene.clone(true);
+
+    cloned.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
         if (mesh.material) {
-          if (Array.isArray(mesh.material)) {
-            mesh.material.forEach((m) => {
-              m.side = THREE.DoubleSide;
-              m.needsUpdate = true;
-            });
-          } else {
-            mesh.material.side = THREE.DoubleSide;
-            mesh.material.needsUpdate = true;
-          }
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((m) => {
+            m.side = THREE.DoubleSide;
+            if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
+              m.roughness = m.roughness ?? 0.4;
+              m.metalness = m.metalness ?? 0.2;
+            }
+            m.needsUpdate = true;
+          });
         }
       }
     });
+
+    const box = new THREE.Box3().setFromObject(cloned);
+    const center = new THREE.Vector3();
+    const size = new THREE.Vector3();
+    box.getCenter(center);
+    box.getSize(size);
+
+    const maxDim = Math.max(size.x, size.y, size.z);
+    const targetScale = maxDim > 0 ? 2.5 / maxDim : 1;
+
+    cloned.position.x = -center.x * targetScale;
+    cloned.position.y = -center.y * targetScale;
+    cloned.position.z = -center.z * targetScale;
+    cloned.scale.setScalar(targetScale);
+
+    return cloned;
   }, [scene]);
 
-  useFrame((state) => {
+  useFrame((state, delta) => {
     if (!groupRef.current) return;
-    const t = state.clock.getElapsedTime();
-    groupRef.current.rotation.y = t * 0.25;
-    groupRef.current.position.y = Math.sin(t * 0.8) * 0.05;
+    groupRef.current.rotation.y += delta * 0.25;
+    groupRef.current.position.y = Math.sin(state.clock.getElapsedTime() * 0.8) * 0.04;
   });
+
+  if (!clonedScene) return null;
 
   return (
     <group ref={groupRef} position={[0, 0, 0]}>
-      <primitive object={scene} scale={[1.0, 1.0, 1.0]} />
+      <primitive object={clonedScene} />
     </group>
   );
 }
@@ -78,21 +173,32 @@ export default function MissionEnvironmentScene({
       {/* Three.js 3D Canvas */}
       <div className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing">
         <Canvas
-          camera={{ position: [0, 1.5, 4.2], fov: 45 }}
-          gl={{ antialias: true, alpha: true }}
+          camera={{ position: [0, 1.2, 4.5], fov: 45, near: 0.1, far: 100 }}
+          onCreated={({ gl }) => {
+            gl.outputColorSpace = THREE.SRGBColorSpace;
+            gl.toneMapping = THREE.ACESFilmicToneMapping;
+            gl.toneMappingExposure = 1.2;
+          }}
+          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2)]}
         >
-          <ambientLight intensity={1.5} />
-          <directionalLight position={[5, 8, 5]} intensity={2.5} />
-          <directionalLight position={[-5, 5, -5]} intensity={1.2} />
-          <pointLight position={[0, -3, 0]} intensity={0.6} />
-          <Suspense fallback={null}>
+          <ambientLight intensity={1.2} />
+          <directionalLight position={[5, 8, 5]} intensity={2.2} />
+          <directionalLight position={[-5, 5, -5]} intensity={1.0} />
+          <pointLight position={[0, -3, 0]} intensity={0.5} />
+          
+          <StudioEnvironment intensity={0.65} />
+
+          <Suspense fallback={<LoadingFallback />}>
             <ShuttleModel />
           </Suspense>
+
           <OrbitControls
             enableZoom={true}
             enablePan={false}
-            minDistance={2}
-            maxDistance={8}
+            enableDamping={true}
+            dampingFactor={0.05}
+            minDistance={1.8}
+            maxDistance={8.0}
             autoRotate={false}
           />
         </Canvas>
