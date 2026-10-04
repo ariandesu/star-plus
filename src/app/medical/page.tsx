@@ -7,6 +7,7 @@ import RouteGuard from '@/components/RouteGuard';
 import AnalysisModal from '@/components/AnalysisModal';
 import MetricDetailModal from '@/components/MetricDetailModal';
 import DoctorHealthOverviewCard from '@/components/DoctorHealthOverviewCard';
+import MedicalNasaMlAnalyticsCard from '@/components/MedicalNasaMlAnalyticsCard';
 import type { OrganSystemKey } from '@/services/organHealthService';
 import { ORGAN_SYSTEM_ACCENT } from '@/services/organHealthService';
 
@@ -183,6 +184,9 @@ export default function MedicalPage() {
 
               {/* All Astronauts Health Overview Doctor Guide Card */}
               <DoctorHealthOverviewCard />
+
+              {/* NASA OSDR Biological Health Analytics Card */}
+              <MedicalNasaMlAnalyticsCard />
 
               {/* Crew Roster Quick Target Selector */}
               <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">

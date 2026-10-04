@@ -24,6 +24,7 @@ import MetricDetailModal from '../../components/MetricDetailModal';
 import MissionPhasesTimelineCard from '../../components/MissionPhasesTimelineCard';
 import MissionObjectivesCard from '../../components/MissionObjectivesCard';
 import MissionQuickActionsCard from '../../components/MissionQuickActionsCard';
+import MissionControlNasaMlTelemetryCard from '../../components/MissionControlNasaMlTelemetryCard';
 import MissionTimelineAlertsCard from '../../components/MissionTimelineAlertsCard';
 import MissionControlNotesCard from '../../components/MissionControlNotesCard';
 import { healthService } from '../../services/healthService';
@@ -212,6 +213,9 @@ export default function MissionControlDashboard() {
                 onRunDiagnostics={() => handleOpenSignal('maya-chen')}
               />
             </div>
+
+            {/* NASA OSDR Mission Control ML Telemetry Card */}
+            <MissionControlNasaMlTelemetryCard />
 
           </div>
 

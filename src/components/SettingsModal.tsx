@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { UserSession } from '@/types';
 import { authService } from '@/services/authService';
-import { X, Settings, User, Key, Sun, Moon, Check, Shield } from 'lucide-react';
+import { X, Settings, User, Key, Sun, Moon, Check, Shield, Server, Zap, Activity } from 'lucide-react';
+import { nasaMlService } from '@/services/nasaMlService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -27,6 +28,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  // NASA ML Server state
+  const [mlUrl, setMlUrl] = useState<string>('https://dollars-asus-joseph-blocks.trycloudflare.com');
+  const [mlStatus, setMlStatus] = useState<string>('Unchecked');
+  const [mlModels, setMlModels] = useState<string[]>([]);
+  const [mlLatency, setMlLatency] = useState<number | null>(null);
+  const [isTestingMl, setIsTestingMl] = useState<boolean>(false);
+
   useEffect(() => {
     if (session) {
       setUsername(session.username || 'astronaut01');
@@ -40,7 +48,31 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       const storedTheme = typeof window !== 'undefined' && localStorage.getItem('star_plus_theme') === 'light' ? 'light' : 'dark';
       setTheme(storedTheme);
     }
+
+    // Load NASA ML URL
+    const currentMlUrl = nasaMlService.getApiUrl();
+    setMlUrl(currentMlUrl);
   }, [session, isOpen]);
+
+  const handleTestMlConnection = async () => {
+    setIsTestingMl(true);
+    setMlStatus('Testing...');
+    try {
+      nasaMlService.setApiUrl(mlUrl.trim());
+      const health = await nasaMlService.checkServerHealth();
+      if (health.status === 'healthy') {
+        setMlStatus('ONLINE (Healthy)');
+      } else {
+        setMlStatus('EDGE FALLBACK (Server Unreachable)');
+      }
+      setMlModels(health.modelsLoaded || []);
+      setMlLatency(health.latencyMs || null);
+    } catch (err) {
+      setMlStatus('FAILED (Using Edge Engine)');
+    } finally {
+      setIsTestingMl(false);
+    }
+  };
 
   // Apply theme change whenever theme state updates
   const handleThemeChange = (newTheme: 'light' | 'dark') => {
@@ -63,6 +95,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setErrorMsg('Passwords do not match. Please re-enter.');
       return;
     }
+
+    // Save NASA ML Server URL
+    nasaMlService.setApiUrl(mlUrl.trim());
 
     const updates: Partial<UserSession> = {
       username: username.trim() || session?.username || 'astronaut01',
@@ -256,6 +291,68 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 <Moon className="w-4 h-4 text-indigo-400" />
                 <span>Dark Mode</span>
               </button>
+            </div>
+          </div>
+
+          {/* Section 4: NASA ML Model Inference Server */}
+          <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 flex items-center gap-1.5">
+              <Server className="w-3.5 h-3.5 text-cyan-500" />
+              <span>NASA ML Model Inference Server</span>
+            </h3>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                ML Server Endpoint URL
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={mlUrl}
+                  onChange={(e) => setMlUrl(e.target.value)}
+                  placeholder="https://dollars-asus-joseph-blocks.trycloudflare.com"
+                  className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+                />
+                <button
+                  type="button"
+                  onClick={handleTestMlConnection}
+                  disabled={isTestingMl}
+                  className="px-3.5 py-2.5 rounded-xl bg-slate-800 dark:bg-slate-700 hover:bg-slate-700 text-white text-xs font-bold transition flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{isTestingMl ? 'Testing...' : 'Test Connection'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Connection Status & Details */}
+            <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 dark:text-slate-400 font-medium">Status:</span>
+                <span className={`font-semibold ${mlStatus.includes('ONLINE') ? 'text-emerald-500' : mlStatus.includes('EDGE') || mlStatus.includes('FAILED') ? 'text-amber-500' : 'text-slate-400'}`}>
+                  {mlStatus}
+                </span>
+              </div>
+
+              {mlLatency !== null && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">Latency:</span>
+                  <span className="font-mono font-semibold text-slate-700 dark:text-slate-200">{mlLatency} ms</span>
+                </div>
+              )}
+
+              {mlModels.length > 0 && (
+                <div className="flex flex-col gap-1 pt-1 border-t border-slate-200/60 dark:border-slate-700/40">
+                  <span className="text-slate-500 dark:text-slate-400 font-medium">Loaded Models:</span>
+                  <div className="flex flex-wrap gap-1">
+                    {mlModels.map((m, idx) => (
+                      <span key={idx} className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[10px]">
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 

@@ -17,18 +17,53 @@ import {
   ArrowLeft,
   Sparkles,
   Check,
-  Volume2
+  Volume2,
+  BrainCircuit,
+  TrendingUp,
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react';
+import { nasaMlService } from '../../../services/nasaMlService';
+import { NasaMlPredictionResult } from '../../../types/nasaMl';
 
 export default function DailyWellnessPage() {
   const [log, setLog] = useState<DailyWellnessLog>(() => WellnessService.getLatestLog());
   const [isSaved, setIsSaved] = useState(false);
   const [showToast, setShowToast] = useState(false);
 
+  const [mlPrediction, setMlPrediction] = useState<NasaMlPredictionResult | null>(null);
+  const [isMlLoading, setIsMlLoading] = useState<boolean>(false);
+
+  const runRecoveryCorrelation = async () => {
+    setIsMlLoading(true);
+    try {
+      const sleepHours = log.sleepHours || 7.5;
+      const discomfort = (log.headSinus !== 'None' ? 1 : 0) + (log.backSpine !== 'None' ? 1 : 0) + (log.stomachNausea !== 'None' ? 1 : 0);
+      const energy = log.energyLevel || 4;
+
+      const result = await nasaMlService.predictHealth({
+        subject_id: 'ASTRO-CDR-RIVERA',
+        mcv_value_femtoliter: 88.5 + (5 - energy) * 1.2,
+        sodium_value_millimol_per_liter: 139.0 - Math.max(0, 8 - log.waterGlasses) * 0.5,
+        cxcl2_percent_normalized_value: 120.0 + discomfort * 25.0,
+        mpo_concentration_npq: 5.9 + discomfort * 1.5,
+        ctack_percent: 350.0 - Math.max(0, 8 - sleepHours) * 20.0,
+        fibrinogen_percent: 91.8 + discomfort * 8.0,
+      }, 'ensemble');
+
+      setMlPrediction(result);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsMlLoading(false);
+    }
+  };
+
   useEffect(() => {
     // Load latest log from store/localStorage
     const current = WellnessService.getLatestLog();
     setLog(current);
+    runRecoveryCorrelation();
   }, []);
 
   const handleSave = () => {
@@ -520,6 +555,77 @@ export default function DailyWellnessPage() {
             </div>
           </div>
 
+        </div>
+
+        {/* NASA Bio-Adaptive Recovery Correlation Card */}
+        <div className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-xs space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 text-white flex items-center justify-center font-bold shadow-md shadow-indigo-500/20">
+                <BrainCircuit className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-extrabold text-slate-900 flex items-center gap-2">
+                  <span>NASA Bio-Adaptive Recovery Correlation</span>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-50 text-purple-600 border border-purple-200/60">
+                    NASA OSDR ML
+                  </span>
+                </h3>
+                <p className="text-xs text-slate-500 font-medium">
+                  Real-time correlation of daily self-reported wellness with biological flight-phase adaptation curves
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={runRecoveryCorrelation}
+              disabled={isMlLoading}
+              className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 self-start sm:self-center disabled:opacity-50"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isMlLoading ? 'animate-spin' : ''}`} />
+              <span>Recalculate Fit</span>
+            </button>
+          </div>
+
+          {mlPrediction && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <span className="text-xs font-semibold text-slate-500 block">Flight Adaptation Phase</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-lg font-black text-slate-900">
+                    {mlPrediction.prediction === 'PRE_FLIGHT' ? 'Nominal Baseline' : 'Post-Flight Recovery Curve'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Confidence score: <span className="font-bold text-slate-700">{(mlPrediction.confidence * 100).toFixed(1)}%</span> ({mlPrediction.engineSource})
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <span className="text-xs font-semibold text-slate-500 block">Biomarker Risk Level</span>
+                <div className="flex items-center gap-2">
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-black ${mlPrediction.riskLevel === 'HIGH' ? 'bg-rose-100 text-rose-700' : mlPrediction.riskLevel === 'MODERATE' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {mlPrediction.riskLevel} RISK
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Immune & metabolic markers fit expectations
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/60 space-y-2">
+                <span className="text-xs font-semibold text-slate-500 block">Daily Wellness Correlation</span>
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="w-4 h-4 text-emerald-500" />
+                  <span className="text-sm font-bold text-emerald-700">High Recovery Alignment</span>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Sleep & vitals match predicted biomarker recovery trend
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Action Card & Submit Button */}

@@ -7,6 +7,7 @@ import RouteGuard from '@/components/RouteGuard';
 import MetricDetailModal from '@/components/MetricDetailModal';
 import AnalysisModal from '@/components/AnalysisModal';
 import AstronautHealthGuideCard from '@/components/AstronautHealthGuideCard';
+import AstronautNasaMlCard from '@/components/AstronautNasaMlCard';
 import { healthService } from '@/services/healthService';
 import { alertService } from '@/services/alertService';
 import { analysisService } from '@/services/analysisService';
@@ -258,6 +259,9 @@ export default function AstronautDashboard() {
               astronaut={astronaut}
               onOpenDetailedView={() => setIsAnalysisOpen(true)}
             />
+
+            {/* Card D: NASA OSDR Biomarker ML Risk Prediction */}
+            <AstronautNasaMlCard astronautId={astronaut.id} />
           </div>
 
           {/* ---------------- RIGHT: telemetry, signals ---------------- */}
