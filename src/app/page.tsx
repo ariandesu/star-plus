@@ -74,10 +74,10 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans select-none bg-[url('/images/hero-bg.png')] bg-cover bg-center bg-no-repeat">
+    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans select-none bg-[url('/images/astronaut-sunrise.png')] bg-cover bg-center bg-no-repeat">
       
       {/* Background Dim & Blur Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-0 bg-slate-950/25 backdrop-blur-[1px]" />
+      <div className="absolute inset-0 pointer-events-none z-0 bg-slate-950/30 backdrop-blur-[0.5px]" />
 
       {/* Top Header Navigation */}
       <header className="relative z-20 px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-800/60 bg-slate-950/50 backdrop-blur-md">
