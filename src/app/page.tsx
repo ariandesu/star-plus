@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User,
@@ -15,6 +15,15 @@ import {
 } from 'lucide-react';
 import { authService } from '../services/authService';
 
+const PRELOAD_MODELS = [
+  '/models/space_shuttle_discovery.glb',
+  '/models/organs/realistic_human_heart.glb',
+  '/models/organs/realistic_human_lungs.glb',
+  '/models/organs/realistic_human_brain.glb',
+  '/models/organs/realistic_human_skeleton.glb',
+  '/models/organs/sleep_astronaut.glb'
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<'ASTRONAUT' | 'MEDICAL' | 'MISSION_CONTROL'>('ASTRONAUT');
@@ -22,6 +31,32 @@ export default function LandingPage() {
   const [password, setPassword] = useState('demo123');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    PRELOAD_MODELS.forEach((url) => {
+      // 1. Eager HTTP fetch for browser cache
+      fetch(url, { cache: 'force-cache' }).catch(() => {});
+
+      // 2. Prefetch link tags in document head
+      if (typeof document !== 'undefined' && !document.querySelector(`link[rel="prefetch"][href="${url}"]`)) {
+        const link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.href = url;
+        link.as = 'fetch';
+        link.crossOrigin = 'anonymous';
+        document.head.appendChild(link);
+      }
+    });
+
+    // 3. Dynamically import @react-three/drei and pre-cache 3D models via useGLTF.preload
+    import('@react-three/drei')
+      .then(({ useGLTF }) => {
+        PRELOAD_MODELS.forEach((url) => {
+          useGLTF.preload(url);
+        });
+      })
+      .catch(() => {});
+  }, []);
 
   const roles = [
     {
@@ -226,49 +261,8 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Demo Instant Access & Login Form */}
-            <div className="space-y-3">
-              <button
-                type="button"
-                onClick={() => {
-                  const res = authService.login(username, password);
-                  if (res.success && res.session) {
-                    const targetRoute = authService.getRoleDefaultRoute(res.session.role);
-                    router.push(targetRoute);
-                  } else {
-                    authService.login('astronaut01', 'demo123');
-                    router.push('/astronaut');
-                  }
-                }}
-                className="w-full py-3 px-6 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm tracking-wide shadow-lg shadow-emerald-500/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>🚀 Enter Demo Mode</span>
-              </button>
-
-              {/* Quick Credentials Card */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
-                <div className="flex items-center justify-between font-extrabold text-slate-800">
-                  <span>Quick Credentials</span>
-                  <span className="text-[10px] font-semibold text-slate-500">Password: demo123</span>
-                </div>
-                <div className="grid grid-cols-3 gap-1.5 text-[10px]">
-                  <div className="p-1.5 rounded-xl bg-white border border-slate-200">
-                    <div className="font-bold text-blue-600">Astronaut</div>
-                    <div className="text-slate-500">astronaut01</div>
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-white border border-slate-200">
-                    <div className="font-bold text-teal-600">Medical FMO</div>
-                    <div className="text-slate-500">medical01</div>
-                  </div>
-                  <div className="p-1.5 rounded-xl bg-white border border-slate-200">
-                    <div className="font-bold text-purple-600">Control</div>
-                    <div className="text-slate-500">control01</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Login Form */}
-              <form onSubmit={handleLogin} className="space-y-3 pt-1">
+            {/* Login Form */}
+            <form onSubmit={handleLogin} className="space-y-3.5">
               {/* Username Input */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">
@@ -325,7 +319,6 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4 stroke-[2.5]" />
               </button>
             </form>
-            </div>
 
             {/* Card Footer Note */}
             <div className="pt-1 text-center flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400">

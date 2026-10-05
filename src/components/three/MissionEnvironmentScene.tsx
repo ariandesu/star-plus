@@ -36,48 +36,24 @@ function StudioEnvironment({ intensity = 0.65 }: { intensity?: number }) {
  */
 function LoadingFallback() {
   const { progress } = useProgress();
-  const wireframeRef = useRef<THREE.Mesh>(null);
-  const ringRef = useRef<THREE.Mesh>(null);
-
-  useFrame((_, delta) => {
-    if (wireframeRef.current) {
-      wireframeRef.current.rotation.y += delta * 0.6;
-      wireframeRef.current.rotation.x += delta * 0.2;
-    }
-    if (ringRef.current) {
-      ringRef.current.rotation.z -= delta * 0.4;
-    }
-  });
 
   return (
-    <group>
-      {/* Sleek 3D wireframe radar sphere */}
-      <mesh ref={wireframeRef}>
-        <icosahedronGeometry args={[1.2, 2]} />
-        <meshBasicMaterial wireframe color="#38bdf8" transparent opacity={0.35} />
-      </mesh>
-      {/* Orbital radar ring */}
-      <mesh ref={ringRef} rotation-x={Math.PI / 3}>
-        <torusGeometry args={[1.65, 0.015, 16, 64]} />
-        <meshBasicMaterial color="#0284c7" transparent opacity={0.6} />
-      </mesh>
-      <Html center>
-        <div className="flex flex-col items-center justify-center pointer-events-none select-none text-center whitespace-nowrap bg-slate-950/85 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-cyan-500/40 shadow-xl shadow-cyan-950/50">
-          <div className="flex items-center gap-2 mb-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-            <span className="text-[11px] font-mono font-bold tracking-wider text-cyan-300 uppercase">
-              CALIBRATING ORBITAL TELEMETRY... {Math.round(progress)}%
-            </span>
-          </div>
-          <div className="w-52 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-cyan-900/60 p-0.5">
-            <div
-              className="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-200"
-              style={{ width: `${Math.max(5, progress)}%` }}
-            />
-          </div>
+    <Html center>
+      <div className="flex flex-col items-center justify-center pointer-events-none select-none text-center whitespace-nowrap bg-slate-950/85 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-cyan-500/40 shadow-xl shadow-cyan-950/50">
+        <div className="flex items-center gap-2 mb-1.5">
+          <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+          <span className="text-[11px] font-mono font-bold tracking-wider text-cyan-300 uppercase">
+            CALIBRATING ORBITAL TELEMETRY... {Math.round(progress)}%
+          </span>
         </div>
-      </Html>
-    </group>
+        <div className="w-52 h-1.5 bg-slate-800 rounded-full overflow-hidden border border-cyan-900/60 p-0.5">
+          <div
+            className="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-emerald-400 rounded-full transition-all duration-200"
+            style={{ width: `${Math.max(5, progress)}%` }}
+          />
+        </div>
+      </div>
+    </Html>
   );
 }
 
