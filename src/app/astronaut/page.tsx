@@ -35,6 +35,7 @@ import {
   Layers,
   Moon,
   Shield,
+  ShieldCheck,
   Sparkles,
   TrendingUp,
   Wind,
@@ -83,6 +84,7 @@ export default function AstronautDashboard() {
   const [selectedMetric, setSelectedMetric] = useState<HealthMetricDetail | null>(null);
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [viewerExpanded, setViewerExpanded] = useState(false);
+  const [activeTab, setActiveTab] = useState<'SURVEILLANCE' | 'COUNTERMEASURES'>('SURVEILLANCE');
 
   const webgl = useWebGLSupport();
   const reducedMotion = usePrefersReducedMotion();
@@ -154,404 +156,636 @@ export default function AstronautDashboard() {
   return (
     <RouteGuard allow={['astronaut']}>
       <div className="flex min-h-screen flex-col bg-[#F5F7FA] font-sans text-slate-900">
-      <TopHeader
-        session={session}
-        greeting={`Good Morning, ${astronaut.name.split(' ')[0]}`}
-        subtitle={`AURORA-1 • Mission Day ${astronaut.missionDay}`}
-        selectedAstronautId={selectedAstronautId}
-        onAstronautChange={(id) => setSelectedAstronautId(id)}
-        selectedTimeHorizon={timeHorizon}
-        onTimeHorizonChange={(h) => setTimeHorizon(h as TimeHorizon)}
-      />
+        <TopHeader
+          session={session}
+          greeting={`Good Morning, ${astronaut.name.split(' ')[0]}`}
+          subtitle={`AURORA-1 • Mission Day ${astronaut.missionDay}`}
+          selectedAstronautId={selectedAstronautId}
+          onAstronautChange={(id) => setSelectedAstronautId(id)}
+          selectedTimeHorizon={timeHorizon}
+          onTimeHorizonChange={(h) => setTimeHorizon(h as TimeHorizon)}
+        />
 
-      <main className="mx-auto w-full max-w-[1600px] flex-1 space-y-5 p-4 sm:p-5 lg:p-7">
-        <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
-          {/* ---------------- LEFT: 3D anatomy + organ focus ---------------- */}
-          <div className={`space-y-5 ${viewerExpanded ? 'lg:col-span-12' : 'lg:col-span-5'}`}>
-            <div
-              className={
-                viewerExpanded
-                  ? 'h-[70vh] min-h-[460px]'
-                  : 'h-[520px] min-h-[420px] sm:h-[560px]'
-              }
-            >
-              {webglUnavailable ? (
-                <AnatomyFallback
-                  system={selectedSystem}
-                  accent={accent}
-                  onSelectSystem={setSelectedSystem}
-                />
-              ) : (
-                <AnatomicalOrganViewer
-                  system={selectedSystem}
-                  onSelectSystem={setSelectedSystem}
-                  accent={accent}
-                  expanded={viewerExpanded}
-                  onToggleExpanded={() => setViewerExpanded((v) => !v)}
-                  reducedMotion={reducedMotion}
-                />
-              )}
+        <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 space-y-6">
+          {/* Frosted glassmorphism navigation sub-navbar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/95 backdrop-blur-xl p-2.5 sm:p-3 rounded-3xl border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-x-auto">
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+              <button
+                onClick={() => setActiveTab('SURVEILLANCE')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition whitespace-nowrap ${
+                  activeTab === 'SURVEILLANCE'
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                <Activity className="h-4 w-4" />
+                Personal Health Surveillance
+              </button>
+              <Link
+                href="/astronaut/wellness"
+                className="flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition whitespace-nowrap"
+              >
+                <Sparkles className="h-4 w-4 text-amber-500" />
+                Daily Wellness Check
+              </Link>
+              <button
+                onClick={() => setActiveTab('COUNTERMEASURES')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-bold transition whitespace-nowrap ${
+                  activeTab === 'COUNTERMEASURES'
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4" />
+                Mission Countermeasures &amp; EVA
+              </button>
             </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100 whitespace-nowrap">
+                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                Flight Ready
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold border border-slate-200/80 whitespace-nowrap">
+                <Clock className="h-3.5 w-3.5 text-slate-500" />
+                Mission MET: Day {astronaut.missionDay}
+              </span>
+            </div>
+          </div>
 
-            {/* Active system focus + per-system analysis rows */}
-            <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  {React.createElement(SYSTEM_ICON[selectedSystem], {
-                    className: 'h-4 w-4',
-                    style: { color: accent },
-                  } as any)}
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">
-                      {ORGAN_SYSTEM_LABEL[selectedSystem]} Health Analysis
+          {activeTab === 'SURVEILLANCE' ? (
+            <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-12">
+              {/* ---------------- LEFT: 3D anatomy + organ focus ---------------- */}
+              <div className={`space-y-5 ${viewerExpanded ? 'lg:col-span-12' : 'lg:col-span-5'}`}>
+                {/* 1. 3D Anatomical Organ Viewer card */}
+                <div
+                  className={
+                    viewerExpanded
+                      ? 'h-[70vh] min-h-[460px]'
+                      : 'h-[520px] min-h-[420px] sm:h-[560px]'
+                  }
+                >
+                  {webglUnavailable ? (
+                    <AnatomyFallback
+                      system={selectedSystem}
+                      accent={accent}
+                      onSelectSystem={setSelectedSystem}
+                    />
+                  ) : (
+                    <AnatomicalOrganViewer
+                      system={selectedSystem}
+                      onSelectSystem={setSelectedSystem}
+                      accent={accent}
+                      expanded={viewerExpanded}
+                      onToggleExpanded={() => setViewerExpanded((v) => !v)}
+                      reducedMotion={reducedMotion}
+                    />
+                  )}
+                </div>
+
+                {/* 2. AstronautHealthGuideCard (Mascot Guide & Health Summary) moved directly under the 3D Viewer */}
+                <AstronautHealthGuideCard
+                  astronaut={astronaut}
+                  onOpenDetailedView={() => setIsAnalysisOpen(true)}
+                />
+
+                {/* 3. Active System Focus & Anatomy breakdown card */}
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      {React.createElement(SYSTEM_ICON[selectedSystem], {
+                        className: 'h-4 w-4',
+                        style: { color: accent },
+                      } as any)}
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">
+                          {ORGAN_SYSTEM_LABEL[selectedSystem]} Health Analysis
+                        </h3>
+                        <p className="text-[11px] text-slate-500">
+                          Derived from the personal baseline, {timeHorizon} window
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setIsAnalysisOpen(true)}
+                      className="flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-slate-800"
+                    >
+                      Explain
+                      <ArrowUpRight className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+
+                  <p className="rounded-lg bg-slate-50 p-2.5 text-[11px] leading-relaxed text-slate-600">
+                    {ORGAN_SYSTEM_NOTE[selectedSystem]}
+                  </p>
+
+                  <ul className="divide-y divide-slate-100">
+                    {view.rows.map((row) => (
+                      <li key={row.id} className="flex items-center justify-between gap-3 py-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate text-xs font-semibold text-slate-700">{row.label}</span>
+                            <span
+                              className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-bold ${
+                                STATUS_STYLE[row.status] ?? STATUS_STYLE.STABLE
+                              }`}
+                            >
+                              {row.status}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-slate-400">Baseline {row.baseline}</span>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <div className="text-sm font-bold text-slate-900">{row.value}</div>
+                          <div
+                            className={`text-[10px] font-bold ${
+                              row.deviation.startsWith('-') ? 'text-sky-600' : 'text-amber-600'
+                            }`}
+                          >
+                            {row.deviation} vs baseline
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              {/* ---------------- RIGHT: telemetry, signals ---------------- */}
+              <div className={`space-y-5 ${viewerExpanded ? 'lg:col-span-12' : 'lg:col-span-7'}`}>
+                {/* 1. System Telemetry Area Chart Card */}
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-bold tracking-tight text-slate-900">
+                        {ORGAN_SYSTEM_LABEL[selectedSystem]} Telemetry
+                      </h2>
+                      <p className="text-xs text-slate-500">{view.trendCaption}</p>
+                    </div>
+                    <div className="flex items-center gap-1 rounded-lg bg-slate-50 p-1" role="group" aria-label="Time range">
+                      {(['24H', '7D', '30D'] as TimeHorizon[]).map((h) => (
+                        <button
+                          key={h}
+                          onClick={() => setTimeHorizon(h)}
+                          aria-pressed={timeHorizon === h}
+                          className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition ${
+                            timeHorizon === h ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                        >
+                          {h}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Headline metric — same source as the chart below it */}
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {view.rows.slice(0, 4).map((row, idx) => {
+                      const meta = metrics.find((m) => m.id === row.id) ?? metrics[idx];
+                      return (
+                        <button
+                          key={row.id}
+                          onClick={() => meta && setSelectedMetric(meta)}
+                          className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-left transition hover:border-slate-200"
+                        >
+                          <div className="mb-1 flex items-center justify-between gap-1">
+                            <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                              {row.label.split('(')[0].trim()}
+                            </span>
+                            <span
+                              className={`text-[10px] font-extrabold ${
+                                row.deviation.startsWith('-') ? 'text-sky-600' : 'text-amber-600'
+                              }`}
+                            >
+                              {row.deviation}
+                            </span>
+                          </div>
+                          <div className="text-base font-bold text-slate-900">{row.value}</div>
+                          <div className="text-[10px] text-slate-400">Baseline {row.baseline}</div>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="h-44 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData} margin={{ top: 5, right: 8, left: -22, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={accent} stopOpacity={0.28} />
+                            <stop offset="95%" stopColor={accent} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <XAxis dataKey="time" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
+                        <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} domain={['dataMin', 'dataMax']} width={44} />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: '#fff',
+                            borderRadius: '10px',
+                            border: '1px solid #e2e8f0',
+                            fontSize: '11px',
+                          }}
+                        />
+                        <Area
+                          type="monotone"
+                          dataKey="value"
+                          stroke={accent}
+                          strokeWidth={2.4}
+                          fillOpacity={1}
+                          fill="url(#trendFill)"
+                          isAnimationActive={!reducedMotion}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <p className="text-[11px] leading-relaxed text-slate-600">{view.interpretation}</p>
+                </div>
+
+                {/* 2. Environmental + Suit + NASA OSDR ML telemetry */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                        <Wind className="h-4 w-4 text-blue-600" />
+                        Habitat Air Loop (ECLSS)
+                      </h3>
+                      <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        NOMINAL
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <Telemetry label="O₂ Concentration" value="20.9%" />
+                      <Telemetry label="CO₂ Concentration" value="0.38%" />
+                      <Telemetry label="Cabin Pressure" value="101.3 kPa" />
+                      <Telemetry label="Cabin Temperature" value="21.5 °C" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                        <Shield className="h-4 w-4 text-blue-600" />
+                        EVA Suit &amp; Habitat
+                      </h3>
+                      <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
+                        PASS
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <Telemetry label="Suit Pressure" value="29.6 kPa" />
+                      <Telemetry label="O₂ Flow" value="0.42 L/min" />
+                      <Telemetry label="CO₂ Scrubber" value="99.4% Eff." />
+                      <Telemetry label="Radiation Dose" value="0.12 mSv/h" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-2xl border border-purple-200/90 bg-gradient-to-br from-purple-50/60 to-white p-4.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                        <Cpu className="h-4 w-4 text-purple-600" />
+                        NASA OSDR ML Telemetry
+                      </h3>
+                      <span className="rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                        POST_FLIGHT 88%
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <Telemetry label="Adaptation Risk" value="MODERATE" />
+                      <Telemetry label="Model Conf." value="88.4%" />
+                      <Telemetry label="Key Feature" value="MCV (+14%)" />
+                      <Telemetry label="Biomarkers" value="605 OSDR" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Watch Signal banner */}
+                {astronaut.status === 'WATCH' && (
+                  <div className="space-y-3 rounded-3xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40 p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white">
+                          <AlertTriangle className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
+                              Watch Signal
+                            </span>
+                            <span className="text-xs font-bold text-amber-800">
+                              Multi-System Physiological Deviation
+                            </span>
+                          </div>
+                          <h4 className="mt-0.5 text-base font-bold tracking-tight text-slate-900">
+                            {astronaut.name} — Sleep Deficit &amp; Microgravity Fluid Shift
+                          </h4>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setIsAnalysisOpen(true)}
+                        className="flex shrink-0 items-center gap-1 rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-amber-700"
+                      >
+                        Why was this flagged?
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    <ul className="space-y-1.5 pl-1">
+                      {view.rows
+                        .filter((r) => r.status !== 'STABLE')
+                        .slice(0, 4)
+                        .map((r) => (
+                          <li key={r.id} className="flex items-start gap-2 text-xs text-slate-700">
+                            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
+                            <span>
+                              <strong className="font-semibold">{r.label}</strong> at {r.value} ({r.deviation} vs
+                              baseline {r.baseline}) — {r.status.toLowerCase()}.
+                            </span>
+                          </li>
+                        ))}
+                    </ul>
+
+                    <p className="text-xs leading-relaxed text-slate-600">{view.interpretation}</p>
+                  </div>
+                )}
+
+                {/* 4. Active Alerts card */}
+                {alerts.length > 0 && (
+                  <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                    <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                      <Clock className="h-4 w-4 text-blue-600" />
+                      Active Alerts &amp; Acknowledgements
                     </h3>
-                    <p className="text-[11px] text-slate-500">
-                      Derived from the personal baseline, {timeHorizon} window
+                    <ul className="divide-y divide-slate-100">
+                      {alerts.slice(0, 4).map((a) => (
+                        <li key={a.id} className="flex items-start justify-between gap-3 py-2">
+                          <div className="min-w-0">
+                            <span className="block truncate text-xs font-semibold text-slate-800">{a.title}</span>
+                            <span className="text-[10px] text-slate-400">
+                              {a.category} • {a.timestamp}
+                              {a.acknowledgedBy ? ` • acknowledged by ${a.acknowledgedBy}` : ''}
+                            </span>
+                          </div>
+                          <span
+                            className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-bold ${
+                              a.severity === 'WARNING'
+                                ? STATUS_STYLE.WATCH
+                                : a.severity === 'CRITICAL'
+                                ? STATUS_STYLE.CRITICAL
+                                : STATUS_STYLE.STABLE
+                            }`}
+                          >
+                            {a.status}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* 5. Mission Progress & Countermeasure Compliance */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                    <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                      <TrendingUp className="h-4 w-4 text-blue-600" />
+                      Mission Day {astronaut.missionDay}
+                    </h3>
+                    <p className="text-xs text-slate-500">{astronaut.mission}</p>
+                    <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-blue-600"
+                        style={{ width: `${Math.min((astronaut.missionDay / 180) * 100, 100)}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] text-slate-400">
+                      {Math.round((astronaut.missionDay / 180) * 100)}% of planned mission duration
+                    </span>
+                  </div>
+
+                  <div className="space-y-3 rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                    <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                      <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                      Countermeasure Compliance
+                    </h3>
+                    <p className="text-xs leading-relaxed text-slate-600">
+                      Resistive exercise and axial loading are tracked against the prescribed schedule because
+                      bone mineral density and muscle cross-section decline without gravitational loading.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg font-bold text-slate-900">
+                        {astronaut.baseline.exerciseScore}%
+                      </span>
+                      <span className="text-[10px] text-slate-400">baseline compliance score</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* COUNTERMEASURES COMMAND CENTER VIEW */
+            <div className="space-y-6">
+              {/* 4 KPI cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Resistive Loading</span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                      <Dumbbell className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-slate-900">ARED: 94%</div>
+                    <p className="text-xs text-slate-500 mt-0.5">Axial Load Target Met</p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Optimal
+                    </span>
+                    <span className="text-slate-400">Schedule: Daily</span>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Cardiovascular / Aerobic</span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                      <Activity className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-slate-900">T2: 42.5 min</div>
+                    <p className="text-xs text-slate-500 mt-0.5">Treadmill Session Completed</p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Nominal
+                    </span>
+                    <span className="text-slate-400">Target: 45 min</span>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Bone Density Shield</span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+                      <Shield className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-slate-900">T-Score -0.2 SD</div>
+                    <p className="text-xs text-slate-500 mt-0.5">DXA Mineral Density Baseline</p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Stable
+                    </span>
+                    <span className="text-slate-400">Loss Rate: &lt;0.5%/mo</span>
+                  </div>
+                </div>
+
+                <div className="rounded-3xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">EMU-4 EVA Suit</span>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                      <ShieldCheck className="h-4 w-4" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-black text-slate-900">100% Ready</div>
+                    <p className="text-xs text-slate-500 mt-0.5">Biometric Fit &amp; Life Support</p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Verified
+                    </span>
+                    <span className="text-slate-400">Suit Pressure: Pass</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Clinical Guidelines Banner for Microgravity Fluid Shift Mitigation */}
+              <div className="rounded-3xl border border-amber-200/80 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/40 p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)] space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white">
+                    <ShieldCheck className="h-5 w-5" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
+                        Clinical Directive
+                      </span>
+                      <span className="text-xs font-bold text-amber-800">
+                        NASA Flight Medicine Protocol #2026-EVA
+                      </span>
+                    </div>
+                    <h3 className="text-base font-bold text-slate-900">
+                      Microgravity Fluid Shift &amp; Musculoskeletal Countermeasures Guideline
+                    </h3>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Cephalad fluid redistribution causes intraocular pressure elevation and spinal decompression in long-duration spaceflight. Crew members must adhere to the 2.5-hour daily countermeasure routine combining high-axial resistive loading (ARED), aerobic conditioning (T2 Treadmill), and pre-EVA Lower Body Negative Pressure (LBNP) protocols.
                     </p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setIsAnalysisOpen(true)}
-                  className="flex shrink-0 items-center gap-1 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white transition hover:bg-slate-800"
-                >
-                  Explain
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </button>
               </div>
 
-              <p className="rounded-lg bg-slate-50 p-2.5 text-[11px] leading-relaxed text-slate-600">
-                {ORGAN_SYSTEM_NOTE[selectedSystem]}
-              </p>
-
-              <ul className="divide-y divide-slate-100">
-                {view.rows.map((row) => (
-                  <li key={row.id} className="flex items-center justify-between gap-3 py-2">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate text-xs font-semibold text-slate-700">{row.label}</span>
-                        <span
-                          className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-bold ${
-                            STATUS_STYLE[row.status] ?? STATUS_STYLE.STABLE
-                          }`}
-                        >
-                          {row.status}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-slate-400">Baseline {row.baseline}</span>
-                    </div>
-                    <div className="shrink-0 text-right">
-                      <div className="text-sm font-bold text-slate-900">{row.value}</div>
-                      <div
-                        className={`text-[10px] font-bold ${
-                          row.deviation.startsWith('-') ? 'text-sky-600' : 'text-amber-600'
-                        }`}
-                      >
-                        {row.deviation} vs baseline
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Card C: Today's Health Summary (Mascot Guide & Wellness Check) */}
-            <AstronautHealthGuideCard
-              astronaut={astronaut}
-              onOpenDetailedView={() => setIsAnalysisOpen(true)}
-            />
-          </div>
-
-          {/* ---------------- RIGHT: telemetry, signals ---------------- */}
-          <div className={`space-y-5 ${viewerExpanded ? 'lg:col-span-12' : 'lg:col-span-7'}`}>
-            {/* Trend card — switches with both system and range */}
-            <div className="space-y-4 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-6">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-lg font-bold tracking-tight text-slate-900">
-                    {ORGAN_SYSTEM_LABEL[selectedSystem]} Telemetry
-                  </h2>
-                  <p className="text-xs text-slate-500">{view.trendCaption}</p>
-                </div>
-                <div className="flex items-center gap-1 rounded-lg bg-slate-50 p-1" role="group" aria-label="Time range">
-                  {(['24H', '7D', '30D'] as TimeHorizon[]).map((h) => (
-                    <button
-                      key={h}
-                      onClick={() => setTimeHorizon(h)}
-                      aria-pressed={timeHorizon === h}
-                      className={`rounded-md px-2.5 py-1 text-[11px] font-bold transition ${
-                        timeHorizon === h ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-                      }`}
-                    >
-                      {h}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Headline metric — same source as the chart below it */}
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {view.rows.slice(0, 4).map((row, idx) => {
-                  const meta = metrics.find((m) => m.id === row.id) ?? metrics[idx];
-                  return (
-                    <button
-                      key={row.id}
-                      onClick={() => meta && setSelectedMetric(meta)}
-                      className="rounded-xl border border-slate-100 bg-slate-50/70 p-3 text-left transition hover:border-slate-200"
-                    >
-                      <div className="mb-1 flex items-center justify-between gap-1">
-                        <span className="text-[10px] font-bold uppercase tracking-wide text-slate-400">
-                          {row.label.split('(')[0].trim()}
-                        </span>
-                        <span
-                          className={`text-[10px] font-extrabold ${
-                            row.deviation.startsWith('-') ? 'text-sky-600' : 'text-amber-600'
-                          }`}
-                        >
-                          {row.deviation}
-                        </span>
-                      </div>
-                      <div className="text-base font-bold text-slate-900">{row.value}</div>
-                      <div className="text-[10px] text-slate-400">Baseline {row.baseline}</div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="h-44 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 5, right: 8, left: -22, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={accent} stopOpacity={0.28} />
-                        <stop offset="95%" stopColor={accent} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="time" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
-                    <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} domain={['dataMin', 'dataMax']} width={44} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: '#fff',
-                        borderRadius: '10px',
-                        border: '1px solid #e2e8f0',
-                        fontSize: '11px',
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="value"
-                      stroke={accent}
-                      strokeWidth={2.4}
-                      fillOpacity={1}
-                      fill="url(#trendFill)"
-                      isAnimationActive={!reducedMotion}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              <p className="text-[11px] leading-relaxed text-slate-600">{view.interpretation}</p>
-            </div>
-
-            {/* Environmental + suit + NASA OSDR ML adaptation telemetry */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                    <Wind className="h-4 w-4 text-blue-600" />
-                    Habitat Air Loop (ECLSS)
-                  </h3>
-                  <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                    NOMINAL
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <Telemetry label="O₂ Concentration" value="20.9%" />
-                  <Telemetry label="CO₂ Concentration" value="0.38%" />
-                  <Telemetry label="Cabin Pressure" value="101.3 kPa" />
-                  <Telemetry label="Cabin Temperature" value="21.5 °C" />
-                </div>
-              </div>
-
-              <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                    <Shield className="h-4 w-4 text-blue-600" />
-                    EVA Suit &amp; Habitat
-                  </h3>
-                  <span className="rounded-full border border-emerald-100 bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700">
-                    PASS
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <Telemetry label="Suit Pressure" value="29.6 kPa" />
-                  <Telemetry label="O₂ Flow" value="0.42 L/min" />
-                  <Telemetry label="CO₂ Scrubber" value="99.4% Eff." />
-                  <Telemetry label="Radiation Dose" value="0.12 mSv/h" />
-                </div>
-              </div>
-
-              <div className="space-y-3 rounded-2xl border border-purple-200/90 bg-gradient-to-br from-purple-50/60 to-white p-5 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                    <Cpu className="h-4 w-4 text-purple-600" />
-                    NASA OSDR ML Telemetry
-                  </h3>
-                  <span className="rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800">
-                    POST_FLIGHT 88%
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2.5">
-                  <Telemetry label="Adaptation Risk" value="MODERATE" />
-                  <Telemetry label="Model Conf." value="88.4%" />
-                  <Telemetry label="Key Feature" value="MCV (+14%)" />
-                  <Telemetry label="Biomarkers" value="605 OSDR" />
-                </div>
-              </div>
-            </div>
-
-            {/* Watch signal — opens the full explanation */}
-            {astronaut.status === 'WATCH' && (
-              <div className="space-y-3 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 to-white p-5 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-white">
-                      <AlertTriangle className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-amber-200/80 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900">
-                          Watch Signal
-                        </span>
-                        <span className="text-xs font-bold text-amber-800">
-                          Multi-System Physiological Deviation
-                        </span>
-                      </div>
-                      <h4 className="mt-0.5 text-base font-bold tracking-tight text-slate-900">
-                        {astronaut.name} — Sleep Deficit &amp; Microgravity Fluid Shift
-                      </h4>
-                    </div>
+              {/* Countermeasure protocol table */}
+              <div className="rounded-3xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900">Countermeasure Prescription &amp; Protocol Log</h3>
+                    <p className="text-xs text-slate-500">Active flight surgeon directives &amp; daily exercise compliance tracking</p>
                   </div>
-                  <button
-                    onClick={() => setIsAnalysisOpen(true)}
-                    className="flex shrink-0 items-center gap-1 rounded-lg bg-amber-600 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-amber-700"
-                  >
-                    Why was this flagged?
-                    <ArrowUpRight className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-
-                <ul className="space-y-1.5 pl-1">
-                  {view.rows
-                    .filter((r) => r.status !== 'STABLE')
-                    .slice(0, 4)
-                    .map((r) => (
-                      <li key={r.id} className="flex items-start gap-2 text-xs text-slate-700">
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-amber-500" />
-                        <span>
-                          <strong className="font-semibold">{r.label}</strong> at {r.value} ({r.deviation} vs
-                          baseline {r.baseline}) — {r.status.toLowerCase()}.
-                        </span>
-                      </li>
-                    ))}
-                </ul>
-
-                <p className="text-xs leading-relaxed text-slate-600">{view.interpretation}</p>
-              </div>
-            )}
-
-            {/* Active alerts */}
-            {alerts.length > 0 && (
-              <div className="space-y-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <Clock className="h-4 w-4 text-blue-600" />
-                  Active Alerts &amp; Acknowledgements
-                </h3>
-                <ul className="divide-y divide-slate-100">
-                  {alerts.slice(0, 4).map((a) => (
-                    <li key={a.id} className="flex items-start justify-between gap-3 py-2">
-                      <div className="min-w-0">
-                        <span className="block truncate text-xs font-semibold text-slate-800">{a.title}</span>
-                        <span className="text-[10px] text-slate-400">
-                          {a.category} • {a.timestamp}
-                          {a.acknowledgedBy ? ` • acknowledged by ${a.acknowledgedBy}` : ''}
-                        </span>
-                      </div>
-                      <span
-                        className={`shrink-0 rounded border px-1.5 py-0.5 text-[9px] font-bold ${
-                          a.severity === 'WARNING'
-                            ? STATUS_STYLE.WATCH
-                            : a.severity === 'CRITICAL'
-                            ? STATUS_STYLE.CRITICAL
-                            : STATUS_STYLE.STABLE
-                        }`}
-                      >
-                        {a.status}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Mission progress */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
-                  Mission Day {astronaut.missionDay}
-                </h3>
-                <p className="text-xs text-slate-500">{astronaut.mission}</p>
-                <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                  <div
-                    className="h-full rounded-full bg-blue-600"
-                    style={{ width: `${Math.min((astronaut.missionDay / 180) * 100, 100)}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-slate-400">
-                  {Math.round((astronaut.missionDay / 180) * 100)}% of planned mission duration
-                </span>
-              </div>
-
-              <div className="space-y-2 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
-                <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
-                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
-                  Countermeasure Compliance
-                </h3>
-                <p className="text-xs leading-relaxed text-slate-600">
-                  Resistive exercise and axial loading are tracked against the prescribed schedule because
-                  bone mineral density and muscle cross-section decline without gravitational loading.
-                </p>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-slate-900">
-                    {astronaut.baseline.exerciseScore}%
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-bold w-fit">
+                    Compliance Target: 100%
                   </span>
-                  <span className="text-[10px] text-slate-400">baseline compliance score</span>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead>
+                      <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                        <th className="pb-3 pr-4">Exercise / Intervention</th>
+                        <th className="pb-3 px-4">Target Load / Duration</th>
+                        <th className="pb-3 px-4">Completion Status</th>
+                        <th className="pb-3 pl-4">Physician Directive</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 text-slate-700">
+                      <tr>
+                        <td className="py-3.5 pr-4">
+                          <div className="font-bold text-slate-900">ARED Heavy Squat &amp; Deadlift</div>
+                          <div className="text-[11px] text-slate-500">Resistive Axial Loading</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold">4 sets x 10 reps @ 85% 1RM</td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-100">
+                            <CheckCircle2 className="h-3 w-3" /> 100% Complete
+                          </span>
+                        </td>
+                        <td className="py-3.5 pl-4 text-slate-600">Maintain spinal telemetry logger during peak load.</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3.5 pr-4">
+                          <div className="font-bold text-slate-900">T2 Treadmill Interval Run</div>
+                          <div className="text-[11px] text-slate-500">Cardiovascular &amp; Bone Density</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold">45 min high-intensity intervals</td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 font-bold border border-amber-100">
+                            <Clock className="h-3 w-3" /> In Progress (42.5 min)
+                          </span>
+                        </td>
+                        <td className="py-3.5 pl-4 text-slate-600">Keep sub-threshold HR &lt; 165 bpm.</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3.5 pr-4">
+                          <div className="font-bold text-slate-900">CEVIS Cycle Ergometer</div>
+                          <div className="text-[11px] text-slate-500">Vibration-Isolated Aerobic</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold">30 min VO2 Peak Protocol</td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold border border-slate-200">
+                            Scheduled (16:30 MET)
+                          </span>
+                        </td>
+                        <td className="py-3.5 pl-4 text-slate-600">Hydration &amp; electrolyte loading required post-session.</td>
+                      </tr>
+                      <tr>
+                        <td className="py-3.5 pr-4">
+                          <div className="font-bold text-slate-900">Lower Body Negative Pressure (LBNP)</div>
+                          <div className="text-[11px] text-slate-500">Cephalad Fluid Shift Mitigation</div>
+                        </td>
+                        <td className="py-3.5 px-4 font-semibold">30 min @ -35 mmHg</td>
+                        <td className="py-3.5 px-4">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-100">
+                            <CheckCircle2 className="h-3 w-3" /> Complete (Pre-EVA)
+                          </span>
+                        </td>
+                        <td className="py-3.5 pl-4 text-slate-600">Counter fluid shift prior to EVA suit donning.</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
+          )}
+        </main>
 
-        {/* Countermeasure Compliance & Mission Stats */}
+        {selectedMetric && (
+          <MetricDetailModal
+            metric={selectedMetric}
+            isOpen={!!selectedMetric}
+            onClose={() => setSelectedMetric(null)}
+          />
+        )}
 
-      </main>
-
-      {selectedMetric && (
-        <MetricDetailModal
-          metric={selectedMetric}
-          isOpen={!!selectedMetric}
-          onClose={() => setSelectedMetric(null)}
-        />
-      )}
-
-      {isAnalysisOpen && (
-        <AnalysisModal
-          signal={analysisService.getAnalysisSignal(selectedAstronautId)}
-          isOpen={isAnalysisOpen}
-          onClose={() => setIsAnalysisOpen(false)}
-        />
-      )}
+        {isAnalysisOpen && (
+          <AnalysisModal
+            signal={analysisService.getAnalysisSignal(selectedAstronautId)}
+            isOpen={isAnalysisOpen}
+            onClose={() => setIsAnalysisOpen(false)}
+          />
+        )}
       </div>
     </RouteGuard>
   );
