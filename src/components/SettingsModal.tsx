@@ -29,7 +29,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [errorMsg, setErrorMsg] = useState('');
 
   // NASA ML Server state
-  const [mlUrl, setMlUrl] = useState<string>('https://dollars-asus-joseph-blocks.trycloudflare.com');
+  const [mlUrl, setMlUrl] = useState<string>('https://star-plus.shareflow.workers.dev/api/ml');
   const [mlStatus, setMlStatus] = useState<string>('Unchecked');
   const [mlModels, setMlModels] = useState<string[]>([]);
   const [mlLatency, setMlLatency] = useState<number | null>(null);
@@ -310,7 +310,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   type="url"
                   value={mlUrl}
                   onChange={(e) => setMlUrl(e.target.value)}
-                  placeholder="https://dollars-asus-joseph-blocks.trycloudflare.com"
+                  placeholder="https://star-plus.shareflow.workers.dev/api/ml"
                   className="flex-1 px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                 />
                 <button

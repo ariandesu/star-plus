@@ -7,7 +7,6 @@ import RouteGuard from '@/components/RouteGuard';
 import MetricDetailModal from '@/components/MetricDetailModal';
 import AnalysisModal from '@/components/AnalysisModal';
 import AstronautHealthGuideCard from '@/components/AstronautHealthGuideCard';
-import AstronautNasaMlCard from '@/components/AstronautNasaMlCard';
 import { healthService } from '@/services/healthService';
 import { alertService } from '@/services/alertService';
 import { analysisService } from '@/services/analysisService';
@@ -29,6 +28,7 @@ import {
   ArrowUpRight,
   CheckCircle2,
   Clock,
+  Cpu,
   Dumbbell,
   Heart,
   HeartPulse,
@@ -353,8 +353,8 @@ export default function AstronautDashboard() {
               <p className="text-[11px] leading-relaxed text-slate-600">{view.interpretation}</p>
             </div>
 
-            {/* Environmental + suit telemetry */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* Environmental + suit + NASA OSDR ML adaptation telemetry */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
               <div className="space-y-3 rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
@@ -388,6 +388,24 @@ export default function AstronautDashboard() {
                   <Telemetry label="O₂ Flow" value="0.42 L/min" />
                   <Telemetry label="CO₂ Scrubber" value="99.4% Eff." />
                   <Telemetry label="Radiation Dose" value="0.12 mSv/h" />
+                </div>
+              </div>
+
+              <div className="space-y-3 rounded-2xl border border-purple-200/90 bg-gradient-to-br from-purple-50/60 to-white p-5 shadow-sm">
+                <div className="flex items-center justify-between">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+                    <Cpu className="h-4 w-4 text-purple-600" />
+                    NASA OSDR ML Telemetry
+                  </h3>
+                  <span className="rounded-full border border-purple-200 bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800">
+                    POST_FLIGHT 88%
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <Telemetry label="Adaptation Risk" value="MODERATE" />
+                  <Telemetry label="Model Conf." value="88.4%" />
+                  <Telemetry label="Key Feature" value="MCV (+14%)" />
+                  <Telemetry label="Biomarkers" value="605 OSDR" />
                 </div>
               </div>
             </div>
@@ -515,10 +533,7 @@ export default function AstronautDashboard() {
           </div>
         </div>
 
-        {/* NASA OSDR Biomarker ML Risk Prediction & In-Flight Simulation */}
-        <section className="w-full">
-          <AstronautNasaMlCard astronautId={astronaut.id} />
-        </section>
+        {/* Countermeasure Compliance & Mission Stats */}
 
       </main>
 

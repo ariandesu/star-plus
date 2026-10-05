@@ -1,9 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Heart, Wind, Droplets, Moon, Shield, Info, ChevronRight, Activity, ArrowUpRight } from 'lucide-react';
+import { Heart, Wind, Droplets, Moon, Shield, Info, ChevronRight, Activity, ArrowUpRight, Cpu, Sparkles } from 'lucide-react';
 import { Astronaut } from '@/types';
+import { nasaMlService } from '../services/nasaMlService';
+import { NasaMlPredictionResult } from '../types/nasaMl';
 
 interface AstronautHealthGuideCardProps {
   astronaut: Astronaut;
@@ -16,6 +18,18 @@ export default function AstronautHealthGuideCard({
 }: AstronautHealthGuideCardProps) {
   const [viewMode, setViewMode] = useState<'simple' | 'detailed'>('simple');
   const [showInfoTip, setShowInfoTip] = useState(false);
+  const [mlResult, setMlResult] = useState<NasaMlPredictionResult | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const biomarkers = (astronaut as any).biomarkers || {};
+    nasaMlService.predictHealth(biomarkers, 'ensemble').then((res) => {
+      if (isMounted) setMlResult(res);
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [astronaut]);
 
   const callsign = astronaut.role.toLowerCase().includes('commander')
     ? 'CDR'
@@ -105,7 +119,7 @@ export default function AstronautHealthGuideCard({
 
             {showInfoTip && (
               <div className="mt-2 p-2 bg-sky-50 rounded-xl border border-sky-100 text-[10px] text-sky-800 leading-relaxed">
-                Synthesized by onboard biomechanical sensors and daily baseline analytics to provide a plain-language wellness overview.
+                Synthesized by onboard biomechanical sensors, NASA OSDR ML adaptation models, and daily baseline analytics to provide a plain-language wellness overview.
               </div>
             )}
           </div>
@@ -202,9 +216,39 @@ export default function AstronautHealthGuideCard({
                   </p>
                 </div>
               </div>
+
+              {/* 6. ML Spaceflight Adaptation Indicator */}
+              <div className="flex items-start gap-2.5 group p-2.5 rounded-xl bg-purple-50/70 border border-purple-100">
+                <div className="w-7 h-7 rounded-full bg-purple-600 flex items-center justify-center shrink-0 shadow-sm shadow-purple-600/20 text-white mt-0.5">
+                  <Cpu className="w-3.5 h-3.5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1.5 flex-wrap">
+                    <span className="text-xs font-bold text-slate-900 flex items-center gap-1">
+                      <span>Spaceflight Adaptation</span>
+                      <span className="text-[9px] font-bold text-purple-700 bg-purple-100/90 px-1.5 py-0.5 rounded-full">NASA OSDR ML</span>
+                    </span>
+                    {mlResult && (
+                      <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase ${
+                        mlResult.riskLevel === 'HIGH'
+                          ? 'bg-rose-100 text-rose-800 border border-rose-200'
+                          : mlResult.riskLevel === 'MODERATE'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-200'
+                          : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                      }`}>
+                        {mlResult.prediction} ({Math.round(mlResult.confidence * 100)}% Conf) • {mlResult.riskLevel} RISK
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[10px] sm:text-[11px] text-slate-600 leading-snug mt-0.5">
+                    Biological adaptation profile: {mlResult?.prediction === 'POST_FLIGHT' ? 'Spaceflight orbital biomarker response active' : 'Nominal pre-flight baseline signature'}.
+                  </p>
+                </div>
+              </div>
+
             </div>
           ) : (
-            <div className="py-2.5 space-y-2">
+            <div className="py-2.5 space-y-3">
               <div className="rounded-xl bg-slate-50 p-2.5 border border-slate-100 space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-semibold text-slate-700">Heart Rate</span>
@@ -223,6 +267,66 @@ export default function AstronautHealthGuideCard({
                   <span className="font-bold text-amber-700">42 ms / 5.8h <span className="text-[10px] text-slate-500 font-normal">(-22%)</span></span>
                 </div>
               </div>
+
+              {/* NASA OSDR ML Detailed Analysis Panel */}
+              {mlResult && (
+                <div className="rounded-2xl bg-slate-900 text-white p-3.5 border border-slate-800 space-y-3 shadow-md">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-purple-400 animate-pulse" />
+                      <span className="text-xs font-extrabold text-purple-200 tracking-tight">
+                        NASA OSDR Flight Adaptation ML Analysis
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded-full">
+                      Model: {mlResult.modelUsed.toUpperCase()} ({mlResult.engineSource})
+                    </span>
+                  </div>
+
+                  {/* Probabilities Breakdown */}
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-[11px] font-semibold text-slate-200">
+                      <span>PRE_FLIGHT: <strong className="text-blue-400">{(mlResult.probabilities.PRE_FLIGHT * 100).toFixed(1)}%</strong></span>
+                      <span>POST_FLIGHT: <strong className="text-purple-400">{(mlResult.probabilities.POST_FLIGHT * 100).toFixed(1)}%</strong></span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
+                      <div
+                        className="h-full bg-blue-500 transition-all duration-500"
+                        style={{ width: `${mlResult.probabilities.PRE_FLIGHT * 100}%` }}
+                      />
+                      <div
+                        className="h-full bg-purple-500 transition-all duration-500"
+                        style={{ width: `${mlResult.probabilities.POST_FLIGHT * 100}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between items-center text-[10px] text-slate-400">
+                      <span>Confidence Score: <strong className="text-white">{(mlResult.confidence * 100).toFixed(1)}%</strong></span>
+                      <span>Risk Assessment: <strong className={mlResult.riskLevel === 'HIGH' ? 'text-rose-400' : mlResult.riskLevel === 'MODERATE' ? 'text-amber-400' : 'text-emerald-400'}>{mlResult.riskLevel} RISK</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Top Biomarker Variance Factors */}
+                  {mlResult.topBiomarkerContributions && mlResult.topBiomarkerContributions.length > 0 && (
+                    <div className="pt-2 border-t border-slate-800/80">
+                      <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block mb-1.5">
+                        Top Biomarker Variance Factors (OSDR Feature Contributions)
+                      </span>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                        {mlResult.topBiomarkerContributions.slice(0, 6).map((bio) => (
+                          <div key={bio.featureKey} className="p-1.5 rounded-lg bg-slate-800/90 flex flex-col justify-between border border-slate-700/50">
+                            <span className="font-mono text-[10px] text-purple-300 font-bold truncate" title={bio.name}>{bio.name || bio.featureKey}</span>
+                            <div className="flex items-center justify-between text-[9px] text-slate-400 mt-0.5">
+                              <span>Val: {bio.value.toFixed(1)}</span>
+                              <span className="text-slate-500">Ref: {bio.referenceMedian}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {onOpenDetailedView && (
                 <button
                   type="button"

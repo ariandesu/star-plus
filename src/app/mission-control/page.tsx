@@ -24,7 +24,6 @@ import MetricDetailModal from '../../components/MetricDetailModal';
 import MissionPhasesTimelineCard from '../../components/MissionPhasesTimelineCard';
 import MissionObjectivesCard from '../../components/MissionObjectivesCard';
 import MissionQuickActionsCard from '../../components/MissionQuickActionsCard';
-import MissionControlNasaMlTelemetryCard from '../../components/MissionControlNasaMlTelemetryCard';
 import MissionTimelineAlertsCard from '../../components/MissionTimelineAlertsCard';
 import MissionControlNotesCard from '../../components/MissionControlNotesCard';
 import { healthService } from '../../services/healthService';
@@ -34,6 +33,7 @@ import { authService } from '../../services/authService';
 import { HealthMetricDetail, AnalysisSignal, UserSession } from '../../types';
 import { 
   Activity, 
+  Cpu,
   Shield, 
   Radio, 
   Thermometer, 
@@ -267,6 +267,17 @@ export default function MissionControlDashboard() {
                         </span>
                       </div>
 
+                      {/* NASA ML Flight Adaptation Status */}
+                      <div className="flex items-center justify-between text-[10px] bg-purple-50/80 px-2 py-1 rounded-lg border border-purple-100/80">
+                        <span className="font-extrabold text-purple-900 flex items-center gap-1">
+                          <Cpu className="w-3 h-3 text-purple-600" />
+                          NASA ML Adaptation:
+                        </span>
+                        <span className="font-bold text-purple-800">
+                          {isWatch ? 'POST_FLIGHT (88%)' : 'PRE_FLIGHT (91%)'}
+                        </span>
+                      </div>
+
                       <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-200/60">
                         <div>
                           <span className="text-[9px] font-bold text-slate-400 uppercase">HEART RATE</span>
@@ -330,6 +341,27 @@ export default function MissionControlDashboard() {
                   <span className="text-[10px] font-semibold text-emerald-600 block">{timeHorizon} Accumulation</span>
                 </div>
               </div>
+
+              {/* Crew Biological Readiness Index & NASA ML Telemetry */}
+              <div className="pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-purple-950 via-slate-900 to-purple-900 text-white space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold text-purple-300 uppercase tracking-wider">Crew Biological Readiness Index</span>
+                    <span className="text-[10px] font-bold bg-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full border border-purple-400/30">NASA OSDR ML</span>
+                  </div>
+                  <div className="text-xl font-black text-white">92.4% <span className="text-xs font-normal text-purple-300">(Nominal Spaceflight Margin)</span></div>
+                  <div className="text-[10px] text-slate-300">Predictive Sensor Drift: 0.14% • Anomaly Risk: LOW</div>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-purple-50/90 border border-purple-100 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-extrabold text-purple-900 uppercase tracking-wider">NASA OSDR Model Health</span>
+                    <span className="text-[10px] font-bold bg-purple-200 text-purple-900 px-2 py-0.5 rounded-full">ONLINE</span>
+                  </div>
+                  <div className="text-xs font-black text-slate-900">Ensemble Accuracy: 94.2% (Latency: 42ms)</div>
+                  <div className="text-[10px] text-purple-800 font-medium">605 Genomic &amp; Biomarker Features Synced</div>
+                </div>
+              </div>
             </div>
 
             {/* Mission Timeline Alerts & Control Notes */}
@@ -339,11 +371,6 @@ export default function MissionControlDashboard() {
           </div>
 
         </div>
-
-        {/* NASA OSDR Mission Control ML Telemetry Card */}
-        <section className="mt-6 w-full">
-          <MissionControlNasaMlTelemetryCard />
-        </section>
 
       </main>
 

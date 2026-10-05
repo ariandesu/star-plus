@@ -13,7 +13,10 @@ import {
 } from '../types/nasaMl';
 
 const DEFAULT_API_URL =
-  process.env.NEXT_PUBLIC_ML_API_URL || 'https://dollars-asus-joseph-blocks.trycloudflare.com';
+  process.env.NEXT_PUBLIC_ML_API_URL ||
+  (typeof window !== 'undefined' && window.location.origin
+    ? `${window.location.origin}/api/ml`
+    : 'https://star-plus.shareflow.workers.dev/api/ml');
 
 export class NasaMlService {
   private apiUrl: string;
@@ -43,6 +46,7 @@ export class NasaMlService {
     if (typeof window !== 'undefined' && window.localStorage) {
       const saved = window.localStorage.getItem('ML_API_URL');
       if (saved) return saved;
+      return `${window.location.origin}/api/ml`;
     }
     return this.apiUrl;
   }
@@ -159,7 +163,9 @@ export class NasaMlService {
           engineSource: 'ONLINE_API',
           timestamp: data.timestamp || new Date().toISOString(),
           featuresUsed: data.features_used || 605,
-          topBiomarkerContributions: nasaMlEngine.predict(biomarkers, modelName).topBiomarkerContributions,
+          topBiomarkerContributions:
+            data.top_biomarker_contributions ||
+            nasaMlEngine.predict(biomarkers, modelName).topBiomarkerContributions,
         };
       }
     } catch (_err) {
