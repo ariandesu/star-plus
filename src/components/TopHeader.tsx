@@ -55,7 +55,6 @@ export default function TopHeader({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [activeHorizon, setActiveHorizon] = useState<'24H' | '7D' | '30D'>(selectedTimeHorizon);
-  const [isMlOnline, setIsMlOnline] = useState<boolean>(true);
   const [currentDate, setCurrentDate] = useState<string>('Oct 5, 2026');
 
   useEffect(() => {
@@ -87,13 +86,6 @@ export default function TopHeader({
     const s = initialSession || authService.getSession();
     setSession(s);
     setAlerts(alertService.getAlerts());
-
-    // Check NASA ML server health on mount
-    nasaMlService.checkServerHealth().then((health) => {
-      setIsMlOnline(health.status === 'healthy');
-    }).catch(() => {
-      setIsMlOnline(false);
-    });
 
     // Apply saved theme or default to dark mode
     if (typeof window !== 'undefined') {
@@ -232,30 +224,24 @@ export default function TopHeader({
 
         {/* Sub-Header Row: Greeting, Mission Pill, Date & Horizon Selector */}
         <div className="bg-slate-50/70 border-t border-slate-100 px-4 sm:px-6 lg:px-8 py-3.5">
-          <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
             
             {/* Greeting & Subtitle */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 shrink-0 whitespace-nowrap">
               <div>
                 <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-snug">{greeting}</h1>
                 <p className="text-xs text-slate-500 font-medium">{subtitle}</p>
               </div>
 
               {/* Status Pill */}
-              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 ml-2">
+              <span className="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 ml-2 shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 NOMINAL MONITORING
-              </span>
-
-              {/* NASA ML Status Pill */}
-              <span className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${isMlOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-amber-50 text-amber-700 border-amber-200/60'} border`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${isMlOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                NASA ML Research Dataset (OSDR Biomarkers)
               </span>
             </div>
 
             {/* Right Controls: Target Selector (if FMO), Date, Time Horizon */}
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex flex-wrap md:flex-nowrap items-center gap-2 sm:gap-3 shrink-0 whitespace-nowrap">
               
               {/* Target Astronaut Selector (if FMO or on change provided) */}
               {onAstronautChange && (

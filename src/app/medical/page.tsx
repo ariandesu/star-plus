@@ -236,12 +236,12 @@ export default function MedicalPage() {
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 space-y-6">
         
         {/* Navigation Tabs Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/95 backdrop-blur-xl p-3 rounded-3xl border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-          <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/95 backdrop-blur-xl p-2.5 sm:p-3 rounded-3xl border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)] overflow-x-auto">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab('CLINICAL')}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'CLINICAL'
                   ? 'bg-[#0066FF] text-white shadow-sm'
                   : 'text-slate-600 hover:bg-slate-100/80'
@@ -253,19 +253,20 @@ export default function MedicalPage() {
             <button
               type="button"
               onClick={() => setActiveTab('DATASET')}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'DATASET'
                   ? 'bg-[#0066FF] text-white shadow-sm'
                   : 'text-slate-600 hover:bg-slate-100/80'
               }`}
             >
               <Table className="w-4 h-4" />
-              <span>NASA ML Research Dataset (OSDR Biomarkers)</span>
+              <span>Research Dataset</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'DATASET' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700'}`}>OSDR</span>
             </button>
             <button
               type="button"
               onClick={handleRunQaSuite}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 whitespace-nowrap ${
                 activeTab === 'TEST_SUITE'
                   ? 'bg-[#0066FF] text-white shadow-sm'
                   : 'text-slate-600 hover:bg-slate-100/80'
@@ -276,10 +277,13 @@ export default function MedicalPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-bold text-slate-500">
-            <span>4 Crew Members Active</span>
+          <div className="flex items-center gap-3 text-xs font-bold text-slate-500 shrink-0 whitespace-nowrap">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-100">
+              <span className="w-2 h-2 rounded-full bg-blue-600" />
+              4 Crew Members Active
+            </span>
             <span className="text-slate-300">•</span>
-            <div className="flex items-center gap-1 text-slate-500">
+            <div className="flex items-center gap-1.5 text-slate-600 font-bold">
               <Clock className="w-3.5 h-3.5 text-[#0066FF]" />
               <span>Mission MET: Day 147</span>
             </div>
