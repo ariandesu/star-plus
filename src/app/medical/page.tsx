@@ -261,7 +261,6 @@ export default function MedicalPage() {
             >
               <Table className="w-4 h-4" />
               <span>Research Dataset</span>
-              <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${activeTab === 'DATASET' ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700'}`}>OSDR</span>
             </button>
             <button
               type="button"
