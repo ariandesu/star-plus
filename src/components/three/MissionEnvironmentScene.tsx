@@ -92,13 +92,17 @@ function ShuttleModel() {
     cloned.traverse((child) => {
       if ((child as THREE.Mesh).isMesh) {
         const mesh = child as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
         if (mesh.material) {
           const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
           mats.forEach((m) => {
             m.side = THREE.DoubleSide;
             if (m instanceof THREE.MeshStandardMaterial || m instanceof THREE.MeshPhysicalMaterial) {
-              m.roughness = m.roughness ?? 0.4;
-              m.metalness = m.metalness ?? 0.2;
+              m.roughness = m.roughness ?? 0.35;
+              m.metalness = m.metalness ?? 0.3;
+              if (m.map) m.map.anisotropy = 16;
+              if (m.normalMap) m.normalMap.anisotropy = 16;
             }
             m.needsUpdate = true;
           });
@@ -113,7 +117,7 @@ function ShuttleModel() {
     box.getSize(size);
 
     const maxDim = Math.max(size.x, size.y, size.z);
-    const targetScale = maxDim > 0 ? 2.5 / maxDim : 1;
+    const targetScale = maxDim > 0 ? 3.2 / maxDim : 1;
 
     cloned.position.x = -center.x * targetScale;
     cloned.position.y = -center.y * targetScale;
@@ -173,16 +177,20 @@ export default function MissionEnvironmentScene({
       {/* Three.js 3D Canvas */}
       <div className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing">
         <Canvas
-          camera={{ position: [0, 1.2, 4.5], fov: 45, near: 0.1, far: 100 }}
+          shadows
+          camera={{ position: [0, 0.8, 3.2], fov: 38, near: 0.1, far: 100 }}
+          gl={{ antialias: true, powerPreference: 'high-performance' }}
           onCreated={({ gl }) => {
             gl.outputColorSpace = THREE.SRGBColorSpace;
             gl.toneMapping = THREE.ACESFilmicToneMapping;
-            gl.toneMappingExposure = 1.2;
+            gl.toneMappingExposure = 1.25;
+            gl.shadowMap.enabled = true;
+            gl.shadowMap.type = THREE.PCFSoftShadowMap;
           }}
-          dpr={[1, Math.min(typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1, 2)]}
+          dpr={[1, 2]}
         >
           <ambientLight intensity={1.2} />
-          <directionalLight position={[5, 8, 5]} intensity={2.2} />
+          <directionalLight position={[5, 8, 5]} intensity={2.2} castShadow shadow-mapSize={[1024, 1024]} />
           <directionalLight position={[-5, 5, -5]} intensity={1.0} />
           <pointLight position={[0, -3, 0]} intensity={0.5} />
           
@@ -197,8 +205,8 @@ export default function MissionEnvironmentScene({
             enablePan={false}
             enableDamping={true}
             dampingFactor={0.05}
-            minDistance={1.8}
-            maxDistance={8.0}
+            minDistance={1.2}
+            maxDistance={6.0}
             autoRotate={false}
           />
         </Canvas>

@@ -99,10 +99,10 @@ export default function DoctorHealthOverviewCard() {
               </div>
               <div>
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  Clinical Overview &amp; NASA ML Screening
+                  All Astronauts Health Overview
                 </h3>
                 <p className="text-[11px] text-slate-500 font-medium">
-                  Real-time spaceflight adaptation classification &amp; biomarker flags across active crew.
+                  Here you can see the health status of all crew members. Select an astronaut to view detailed data, trends, and clinical insights.
                 </p>
               </div>
             </div>

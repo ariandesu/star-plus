@@ -56,6 +56,32 @@ export default function TopHeader({
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [activeHorizon, setActiveHorizon] = useState<'24H' | '7D' | '30D'>(selectedTimeHorizon);
   const [isMlOnline, setIsMlOnline] = useState<boolean>(true);
+  const [currentDate, setCurrentDate] = useState<string>('Oct 5, 2026');
+
+  useEffect(() => {
+    const formatDate = () => {
+      const now = new Date();
+      const monthDayYear = now.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC'
+      });
+      const timeStr = now.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false,
+        timeZone: 'UTC'
+      });
+      return `${monthDayYear} · ${timeStr} UTC`;
+    };
+    setCurrentDate(formatDate());
+    const interval = setInterval(() => {
+      setCurrentDate(formatDate());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const s = initialSession || authService.getSession();
@@ -252,7 +278,7 @@ export default function TopHeader({
               {/* Date Selector Pill */}
               <div className="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-200/80 text-xs font-semibold text-slate-700 shadow-2xs">
                 <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                <span>Sep 26, 2026</span>
+                <span>{currentDate}</span>
               </div>
 
               {/* Time Horizon Selector (24H, 7D, 30D) */}

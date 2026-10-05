@@ -14,25 +14,85 @@ const AnatomicalOrganViewer = dynamic(
   () => import('@/components/three/AnatomicalOrganViewer'),
   { ssr: false }
 );
-import { MOCK_ASTRONAUTS, MOCK_ALERTS, MAYA_ANALYSIS_SIGNAL } from '../../data/mockData';
+
+import { MOCK_ASTRONAUTS, MOCK_ALERTS } from '../../data/mockData';
 import { authService } from '../../services/authService';
 import { analysisService } from '../../services/analysisService';
 import { DataAdapterService, NormalizedAstronautRecord } from '../../services/dataAdapterService';
 import { TestRunnerService, TestSuiteReport } from '../../services/testRunnerService';
 import { 
-  AlertTriangle, ShieldCheck, Stethoscope, Search, Bell, CheckCircle2, 
+  AlertTriangle, CheckCircle2, 
   Activity, Heart, Moon, Zap, User, RefreshCw, ChevronRight, FileSpreadsheet, PlayCircle, Filter,
-  ArrowUpRight, Sparkles, FileText, Check
+  Sparkles, FileText, Check, Clock, ShieldCheck, Flame
 } from 'lucide-react';
+
+const CREW_DETAILS = [
+  {
+    id: 'maya-chen',
+    name: 'CDR Maya Chen',
+    role: 'Commander / Pilot',
+    day: 147,
+    hr: '74 BPM',
+    bp: '122 mmHg',
+    sleepScore: '93%',
+    sleepHours: '4.8 h',
+    status: 'WATCH' as const,
+    alertCount: 3,
+    avatarUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'alex-carter',
+    name: 'Dr. Alex Carter',
+    role: 'Flight Engineer',
+    day: 142,
+    hr: '68 BPM',
+    bp: '118 mmHg',
+    sleepScore: '99%',
+    sleepHours: '6.2 h',
+    status: 'STABLE' as const,
+    alertCount: 1,
+    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'ryan-patel',
+    name: 'Lt. Ryan Patel',
+    role: 'Payload Specialist',
+    day: 139,
+    hr: '76 BPM',
+    bp: '120 mmHg',
+    sleepScore: '98%',
+    sleepHours: '5.1 h',
+    status: 'WATCH' as const,
+    alertCount: 2,
+    avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80'
+  },
+  {
+    id: 'lina-park',
+    name: 'Dr. Lina Park',
+    role: 'Geology & Habitat Specialist',
+    day: 135,
+    hr: '70 BPM',
+    bp: '116 mmHg',
+    sleepScore: '99%',
+    sleepHours: '6.8 h',
+    status: 'STABLE' as const,
+    alertCount: 0,
+    avatarUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&auto=format&fit=crop&q=80'
+  }
+];
 
 export default function MedicalPage() {
   const [session, setSession] = useState<any>(null);
   const [selectedAstronautId, setSelectedAstronautId] = useState<string>('maya-chen');
   const [selectedSystem, setSelectedSystem] = useState<OrganSystemKey>('CARDIOVASCULAR');
   const [timeHorizon, setTimeHorizon] = useState<'24H' | '7D' | '30D'>('24H');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'WATCH' | 'STABLE'>('ALL');
   const [alerts, setAlerts] = useState(MOCK_ALERTS);
   const [clinicalNotes, setClinicalNotes] = useState<Record<string, string>>({
-    'maya-chen': 'Patient experiencing elevated HRV stress recovery flags during Sleep Phase 3. Recommending rest window shift.'
+    'maya-chen': 'Patient experiencing elevated HRV stress recovery flags during Sleep Phase 3. Recommending rest window shift.',
+    'alex-carter': 'Vitals stable. Continuing nominal exercise protocol on ARED countermeasure device.',
+    'ryan-patel': 'Slight elevation in resting heart rate post EVA-2. Monitoring hydration and electrolyte balance.',
+    'lina-park': 'All biomarkers nominal. Full compliance with sleep schedule and cognitive readiness tests.'
   });
   const [newNote, setNewNote] = useState('');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -77,13 +137,19 @@ export default function MedicalPage() {
     if (!newNote.trim()) return;
     setClinicalNotes(prev => ({
       ...prev,
-      [selectedAstronautId]: `${prev[selectedAstronautId] ? prev[selectedAstronautId] + '\n\n' : ''}[${new Date().toLocaleTimeString()}] ${newNote}`
+      [selectedAstronautId]: `${prev[selectedAstronautId] ? prev[selectedAstronautId] + '\n\n' : ''}[${new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false })}] ${newNote}`
     }));
     setNewNote('');
     showToast('Clinical note logged successfully.');
   };
 
+  const currentCrewItem = CREW_DETAILS.find(c => c.id === selectedAstronautId) || CREW_DETAILS[0];
   const currentAstronaut = MOCK_ASTRONAUTS.find(a => a.id === selectedAstronautId) || MOCK_ASTRONAUTS[0];
+
+  const filteredCrew = CREW_DETAILS.filter(c => {
+    if (statusFilter === 'ALL') return true;
+    return c.status === statusFilter;
+  });
 
   const filteredDataset = datasetRecords.filter(r => {
     if (datasetFilter !== 'ALL' && r.status !== datasetFilter) return false;
@@ -98,7 +164,7 @@ export default function MedicalPage() {
     <RouteGuard allow={['medical']}>
       <div className="min-h-screen bg-[#F4F7FC] text-slate-900 font-sans flex flex-col">
       
-      {/* Top Header matching reference layout */}
+      {/* Top Header */}
       <TopHeader
         session={session}
         greeting="Flight Medical Officer Command"
@@ -117,10 +183,10 @@ export default function MedicalPage() {
         </div>
       )}
 
-      {/* Main Content Layout (40/60 Asymmetrical Composition) */}
+      {/* Main Content Layout */}
       <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
         
-        {/* Navigation Tabs (Clinical Overview, 1,000 Records Explorer, QA Suite) */}
+        {/* Navigation Tabs */}
         <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
           <div className="flex items-center gap-2">
             <button
@@ -158,7 +224,7 @@ export default function MedicalPage() {
           </div>
 
           <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-500">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
             <span>4 Crew Members Active</span>
           </div>
         </div>
@@ -168,11 +234,10 @@ export default function MedicalPage() {
             
             {/* ========================================================= */}
             {/* LEFT COLUMN (~40% desktop, 5 cols out of 12)             */}
-            {/* Three.js 3D Visual Centerpiece, Roster & System Selectors */}
             {/* ========================================================= */}
-            <div className="lg:col-span-5 space-y-4">
+            <div className="lg:col-span-5 space-y-5">
               
-              {/* Real reference-organ anatomy viewer (HRA / BodyParts3D) */}
+              {/* A) 3D Anatomical Organ Viewer */}
               <div className="h-[520px] min-h-[420px]">
                 <AnatomicalOrganViewer
                   system={selectedSystem}
@@ -181,35 +246,101 @@ export default function MedicalPage() {
                 />
               </div>
 
-              {/* All Astronauts Health Overview Doctor Guide Card */}
+              {/* B) Doctor Health Overview Card (Mascot & Speech Bubble) */}
               <DoctorHealthOverviewCard />
 
-              {/* Crew Roster Quick Target Selector */}
-              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider block">
-                  Select Active Astronaut Target
-                </span>
+              {/* C) Crew Members (4) Card */}
+              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+                {/* Header with Filter Dropdown */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                    <span>Crew Members (4)</span>
+                  </h3>
 
-                <div className="grid grid-cols-2 gap-2.5">
-                  {MOCK_ASTRONAUTS.map((a) => {
-                    const isSelected = selectedAstronautId === a.id;
-                    const isWatch = a.status === 'WATCH';
+                  <div className="flex items-center gap-1.5 bg-slate-100/90 px-2.5 py-1 rounded-xl border border-slate-200/60">
+                    <Filter className="w-3 h-3 text-slate-500" />
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value as any)}
+                      className="text-[11px] font-bold text-slate-700 bg-transparent focus:outline-none cursor-pointer"
+                    >
+                      <option value="ALL">All Status</option>
+                      <option value="WATCH">Watch Only</option>
+                      <option value="STABLE">Stable Only</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* 4 Detailed Astronaut Rows */}
+                <div className="space-y-2.5">
+                  {filteredCrew.map((c) => {
+                    const isSelected = selectedAstronautId === c.id;
+                    const isWatch = c.status === 'WATCH';
 
                     return (
                       <button
-                        key={a.id}
-                        onClick={() => setSelectedAstronautId(a.id)}
-                        className={`p-3 rounded-2xl border transition text-left flex flex-col justify-between ${
+                        key={c.id}
+                        type="button"
+                        onClick={() => setSelectedAstronautId(c.id)}
+                        className={`w-full p-3.5 rounded-2xl border transition-all text-left flex flex-col gap-2.5 ${
                           isSelected
-                            ? 'bg-blue-50/80 border-blue-600 shadow-2xs'
-                            : 'bg-slate-50/70 border-slate-100 hover:bg-slate-100'
+                            ? 'bg-blue-50/70 border-blue-500 shadow-sm ring-1 ring-blue-400/40'
+                            : 'bg-slate-50/60 border-slate-200/80 hover:bg-slate-100/80'
                         }`}
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-extrabold text-slate-900">{a.name}</span>
-                          <span className={`w-2 h-2 rounded-full ${isWatch ? 'bg-amber-500 animate-ping' : 'bg-emerald-500'}`} />
+                        {/* Top Line: Name, Role, Day, Badges */}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2.5">
+                            <img
+                              src={c.avatarUrl}
+                              alt={c.name}
+                              className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
+                            />
+                            <div>
+                              <div className="text-xs font-black text-slate-900 leading-tight flex items-center gap-1.5">
+                                <span>{c.name}</span>
+                                <span className="text-[10px] font-semibold text-slate-400">({c.role})</span>
+                              </div>
+                              <div className="text-[10px] text-slate-500 font-medium">
+                                Day {c.day} • AURORA-1
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Right Badges: Status Pill & Alert Counter */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold tracking-wide uppercase ${
+                              isWatch ? 'bg-amber-100 text-amber-800 border border-amber-200/80' : 'bg-emerald-100 text-emerald-800 border border-emerald-200/80'
+                            }`}>
+                              {isWatch ? 'Watch' : 'Stable'}
+                            </span>
+                            <span className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center ${
+                              c.alertCount > 0 ? 'bg-rose-500 text-white shadow-xs' : 'bg-slate-200 text-slate-600'
+                            }`}>
+                              {c.alertCount}
+                            </span>
+                          </div>
                         </div>
-                        <span className="text-[10px] text-slate-500 font-semibold mt-1">{a.role}</span>
+
+                        {/* Vitals & Metrics Breakdown Line */}
+                        <div className="grid grid-cols-4 gap-1.5 pt-1 border-t border-slate-200/50 text-[10px] font-semibold text-slate-600">
+                          <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
+                            <span className="text-slate-400 block text-[9px] uppercase">HR</span>
+                            <span className="font-extrabold text-slate-900">{c.hr}</span>
+                          </div>
+                          <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
+                            <span className="text-slate-400 block text-[9px] uppercase">BP</span>
+                            <span className="font-extrabold text-slate-900">{c.bp}</span>
+                          </div>
+                          <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
+                            <span className="text-slate-400 block text-[9px] uppercase">Sleep %</span>
+                            <span className="font-extrabold text-slate-900">{c.sleepScore}</span>
+                          </div>
+                          <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
+                            <span className="text-slate-400 block text-[9px] uppercase">Sleep h</span>
+                            <span className="font-extrabold text-slate-900">{c.sleepHours}</span>
+                          </div>
+                        </div>
                       </button>
                     );
                   })}
@@ -220,24 +351,23 @@ export default function MedicalPage() {
 
             {/* ========================================================= */}
             {/* RIGHT COLUMN (~60% desktop, 7 cols out of 12)            */}
-            {/* Medical Analysis, Clinical Notes & Alert Triage Feed      */}
             {/* ========================================================= */}
             <div className="lg:col-span-7 space-y-6">
               
-              {/* Upper Right: Medical Analysis & AI Explainability Panel */}
+              {/* A) Multi-System Physiological Deviation Matrix */}
               <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
                 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
-                        currentAstronaut.status === 'WATCH' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        currentCrewItem.status === 'WATCH' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
                       }`}>
-                        STATUS: {currentAstronaut.status}
+                        STATUS: {currentCrewItem.status}
                       </span>
-                      <span className="text-xs font-semibold text-slate-400">Target: {currentAstronaut.name}</span>
+                      <span className="text-xs font-semibold text-slate-500">Target: {currentCrewItem.name}</span>
                       <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-800 border border-purple-200">
-                        NASA ML: {currentAstronaut.status === 'WATCH' ? 'POST_FLIGHT (88% CONF)' : 'PRE_FLIGHT (91% CONF)'}
+                        NASA ML: {currentCrewItem.status === 'WATCH' ? 'POST_FLIGHT (88% CONF)' : 'PRE_FLIGHT (91% CONF)'}
                       </span>
                     </div>
                     <h2 className="text-xl font-black text-slate-900 tracking-tight mt-1">
@@ -247,11 +377,12 @@ export default function MedicalPage() {
 
                   {selectedAstronautId === 'maya-chen' && (
                     <button
+                      type="button"
                       onClick={() => setIsAnalysisOpen(true)}
                       className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer shrink-0"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Why was this flagged?</span>
+                      <span>⚡ Why was this flagged?</span>
                     </button>
                   )}
                 </div>
@@ -271,29 +402,43 @@ export default function MedicalPage() {
                     <tbody className="divide-y divide-slate-100">
                       <tr>
                         <td className="py-3 px-3 font-bold text-slate-900">Resting Heart Rate</td>
-                        <td className="py-3 px-3 font-semibold text-slate-700">{selectedAstronautId === 'maya-chen' ? '65 bpm' : '60 bpm'}</td>
+                        <td className="py-3 px-3 font-semibold text-slate-700">{currentCrewItem.hr}</td>
                         <td className="py-3 px-3 text-slate-500">60 bpm</td>
-                        <td className="py-3 px-3 font-bold text-amber-600">+8.3%</td>
+                        <td className={`py-3 px-3 font-bold ${currentCrewItem.status === 'WATCH' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          {currentCrewItem.status === 'WATCH' ? '+23.3%' : '+3.3%'}
+                        </td>
                         <td className="py-3 px-3 text-right">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">WATCH</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            currentCrewItem.status === 'WATCH' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {currentCrewItem.status === 'WATCH' ? 'WATCH' : 'NOMINAL'}
+                          </span>
                         </td>
                       </tr>
                       <tr>
                         <td className="py-3 px-3 font-bold text-slate-900">Sleep Duration (24H)</td>
-                        <td className="py-3 px-3 font-semibold text-slate-700">{selectedAstronautId === 'maya-chen' ? '4.8 hours' : '7.5 hours'}</td>
+                        <td className="py-3 px-3 font-semibold text-slate-700">{currentCrewItem.sleepHours}</td>
                         <td className="py-3 px-3 text-slate-500">7.5 hours</td>
-                        <td className="py-3 px-3 font-bold text-amber-600">-19.2%</td>
+                        <td className={`py-3 px-3 font-bold ${currentCrewItem.status === 'WATCH' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          {currentCrewItem.status === 'WATCH' ? '-36.0%' : '-17.3%'}
+                        </td>
                         <td className="py-3 px-3 text-right">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700">DEFICIT</span>
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            currentCrewItem.status === 'WATCH' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {currentCrewItem.status === 'WATCH' ? 'DEFICIT' : 'OPTIMAL'}
+                          </span>
                         </td>
                       </tr>
                       <tr>
                         <td className="py-3 px-3 font-bold text-slate-900">Blood Oxygen (SpO2)</td>
-                        <td className="py-3 px-3 font-semibold text-slate-700">98%</td>
-                        <td className="py-3 px-3 text-slate-500">98%</td>
-                        <td className="py-3 px-3 font-bold text-emerald-600">0.0%</td>
+                        <td className="py-3 px-3 font-semibold text-slate-700">98.2%</td>
+                        <td className="py-3 px-3 text-slate-500">98.0%</td>
+                        <td className="py-3 px-3 font-bold text-emerald-600">+0.2%</td>
                         <td className="py-3 px-3 text-right">
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700">NOMINAL</span>
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            STABLE
+                          </span>
                         </td>
                       </tr>
                     </tbody>
@@ -302,16 +447,17 @@ export default function MedicalPage() {
 
               </div>
 
-              {/* Middle Right: Clinical Notes Logger */}
-              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-3">
+              {/* B) Clinical Notes & Recommendations Card */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                  <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                     <FileText className="w-4 h-4 text-blue-600" />
-                    <span>Clinical Notes — {currentAstronaut.name}</span>
+                    <span>Clinical Notes ({currentCrewItem.name})</span>
                   </h3>
+                  <span className="text-[10px] font-bold text-slate-400">CONFIDENTIAL MEDICAL LOG</span>
                 </div>
 
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap max-h-[120px] overflow-y-auto">
+                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-100 text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap max-h-[120px] overflow-y-auto">
                   {clinicalNotes[selectedAstronautId] || 'No active notes logged for this astronaut.'}
                 </div>
 
@@ -320,10 +466,11 @@ export default function MedicalPage() {
                     type="text"
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
-                    placeholder={`Log clinical recommendation for ${currentAstronaut.name}...`}
+                    placeholder={`Log clinical recommendation for ${currentCrewItem.name}...`}
                     className="flex-1 px-4 py-2 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                   <button
+                    type="button"
                     onClick={handleAddNote}
                     className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
                   >
@@ -332,12 +479,17 @@ export default function MedicalPage() {
                 </div>
               </div>
 
-              {/* Bottom Right: Alert Triage Feed */}
+              {/* C) Real-Time Alert Triage Feed Card */}
               <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
-                <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                  <span>Real-Time Alert Triage Feed</span>
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4 text-amber-500" />
+                    <span>Real-Time Alert Triage Feed</span>
+                  </h3>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200">
+                    4 ACTIVE SIGNALS
+                  </span>
+                </div>
 
                 <div className="space-y-3">
                   {alerts.map((alert) => (
@@ -348,7 +500,7 @@ export default function MedicalPage() {
                       <div>
                         <div className="flex items-center gap-2">
                           <span className={`px-2 py-0.5 rounded-full text-[9px] font-extrabold ${
-                            alert.severity === 'CRITICAL' ? 'bg-amber-100 text-amber-800' : 'bg-blue-100 text-blue-800'
+                            alert.severity === 'CRITICAL' ? 'bg-amber-100 text-amber-800 border border-amber-200' : 'bg-blue-100 text-blue-800 border border-blue-200'
                           }`}>
                             {alert.severity}
                           </span>
@@ -359,11 +511,12 @@ export default function MedicalPage() {
 
                       <div className="flex items-center gap-2 shrink-0">
                         {alert.status === 'ACKNOWLEDGED' ? (
-                          <span className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200">
-                            ✓ ACKNOWLEDGED
+                          <span className="px-3 py-1 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-200 flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5 text-emerald-600" /> ACKNOWLEDGED
                           </span>
                         ) : (
                           <button
+                            type="button"
                             onClick={() => handleAcknowledgeAlert(alert.id)}
                             className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
                           >
@@ -376,86 +529,58 @@ export default function MedicalPage() {
                 </div>
               </div>
 
-            </div>
-
-            {/* NASA OSDR Biological Health & Feature Explainability Embedded Panel */}
-            <div className="mt-6 bg-white rounded-3xl p-6 border border-purple-100 shadow-sm space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 uppercase tracking-wider">
-                      NASA OSDR ML ENGINE
-                    </span>
-                    <span className="text-xs font-semibold text-slate-500">Dataset: OSD-605 / Spaceflight Biomarkers</span>
+              {/* D) Bottom 2 Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
+                {/* Card 1: Mission Day 147 */}
+                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider">PRIMARY MISSION</span>
+                      <span className="text-[10px] font-bold text-slate-400">SURFACE OPS</span>
+                    </div>
+                    <h4 className="text-lg font-black text-slate-900 mt-1">Mission Day 147</h4>
+                    <p className="text-xs text-slate-500 font-medium">AURORA-1 • Lunar Surface Ops</p>
                   </div>
-                  <h3 className="text-lg font-black text-slate-900 tracking-tight mt-1">
-                    Clinical Spaceflight Adaptation &amp; Biomarker Contribution Breakdown ({currentAstronaut.name})
-                  </h3>
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold">
+                      <span className="text-slate-600">Progress</span>
+                      <span className="text-blue-600 font-extrabold">62%</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
+                      <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full" style={{ width: '62%' }} />
+                    </div>
+                    <p className="text-[10px] text-slate-400 font-medium pt-0.5">
+                      62% of planned mission duration completed.
+                    </p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-xl bg-purple-50 text-purple-700 text-xs font-bold border border-purple-200">
-                    Ensemble Accuracy: 94.2%
-                  </span>
+
+                {/* Card 2: Countermeasure Compliance */}
+                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider">ARED &amp; TREADMILL</span>
+                      <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">NOMINAL</span>
+                    </div>
+                    <h4 className="text-lg font-black text-slate-900 mt-1">Countermeasure Compliance</h4>
+                    <p className="text-xs text-slate-500 font-medium leading-tight mt-1">
+                      Exercise sessions and axial loading are tracked against prescribed schedule.
+                    </p>
+                  </div>
+
+                  <div className="flex items-baseline justify-between pt-1">
+                    <div>
+                      <span className="text-3xl font-black text-slate-900 tracking-tight">92%</span>
+                      <span className="text-xs text-slate-500 font-semibold ml-1.5">baseline compliance</span>
+                    </div>
+                    <ShieldCheck className="w-6 h-6 text-emerald-500" />
+                  </div>
                 </div>
+
               </div>
 
-              {/* Patient ML Adaptation Probabilities & Risk Metrics */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2">
-                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Flight Adaptation Classification</div>
-                  <div className="text-lg font-extrabold text-purple-300">
-                    {currentAstronaut.status === 'WATCH' ? 'POST_FLIGHT ADAPTATION' : 'PRE_FLIGHT BASELINE'}
-                  </div>
-                  <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden flex">
-                    <div className="h-full bg-blue-500" style={{ width: currentAstronaut.status === 'WATCH' ? '12.4%' : '91.2%' }} />
-                    <div className="h-full bg-purple-500" style={{ width: currentAstronaut.status === 'WATCH' ? '87.6%' : '8.8%' }} />
-                  </div>
-                  <div className="flex justify-between text-[10px] text-slate-400 pt-1">
-                    <span>Confidence: {currentAstronaut.status === 'WATCH' ? '88.4%' : '91.2%'}</span>
-                    <span className={currentAstronaut.status === 'WATCH' ? 'text-amber-400 font-bold' : 'text-emerald-400 font-bold'}>
-                      Risk Level: {currentAstronaut.status === 'WATCH' ? 'MODERATE' : 'LOW'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 md:col-span-2">
-                  <div className="text-xs font-extrabold text-slate-900 uppercase tracking-wider">
-                    Top Contributing Biomarkers (SHAP / Feature Variance)
-                  </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-xs">
-                      <div className="font-bold text-purple-700">MCV (RBC Volume)</div>
-                      <div className="text-[10px] text-slate-500">Val: 104.2 fL (Ref: 91.5)</div>
-                      <div className="text-[9px] font-bold text-slate-400 mt-0.5">+14.2% vs Baseline</div>
-                    </div>
-                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-xs">
-                      <div className="font-bold text-purple-700">CXCL2 (Cytokine)</div>
-                      <div className="text-[10px] text-slate-500">Val: 38.6 pg/mL (Ref: 24.1)</div>
-                      <div className="text-[9px] font-bold text-amber-600 mt-0.5">+22.1% Inflammation</div>
-                    </div>
-                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-xs">
-                      <div className="font-bold text-purple-700">Fibrinogen</div>
-                      <div className="text-[10px] text-slate-500">Val: 385 mg/dL (Ref: 310)</div>
-                      <div className="text-[9px] font-bold text-slate-400 mt-0.5">+8.5% Coagulation</div>
-                    </div>
-                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-xs">
-                      <div className="font-bold text-purple-700">CTACK (CCL27)</div>
-                      <div className="text-[10px] text-slate-500">Val: 1,420 pg/mL (Ref: 1,150)</div>
-                      <div className="text-[9px] font-bold text-slate-400 mt-0.5">Dermal/Vascular</div>
-                    </div>
-                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-xs">
-                      <div className="font-bold text-purple-700">MPO (Myeloperoxidase)</div>
-                      <div className="text-[10px] text-slate-500">Val: 54.2 ng/mL (Ref: 42.0)</div>
-                      <div className="text-[9px] font-bold text-slate-400 mt-0.5">Neutrophil stress</div>
-                    </div>
-                    <div className="p-2 bg-white rounded-xl border border-slate-200 text-xs">
-                      <div className="font-bold text-purple-700">Sodium (Na+)</div>
-                      <div className="text-[10px] text-slate-500">Val: 138 mmol/L (Ref: 140)</div>
-                      <div className="text-[9px] font-bold text-emerald-600 mt-0.5">Nominal fluid balance</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
 
           </div>
@@ -535,6 +660,7 @@ export default function MedicalPage() {
                   {qaReport.passedCount} / {qaReport.totalScenarios} PASSED
                 </span>
                 <button
+                  type="button"
                   onClick={handleRunQaSuite}
                   className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5"
                 >
