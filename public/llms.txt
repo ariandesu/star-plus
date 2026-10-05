@@ -1,0 +1,25 @@
+# STAR+ AI — NASA Space Health & Astronaut Telemetry System
+
+> STAR+ is a NASA spaceflight health monitoring and astronaut telemetry system designed to deliver real-time risk assessment, digital twin organ visualisations, and multi-omics spaceflight health inference for the Aurora-1 Mission (NASA Space Apps Challenge 2026).
+
+## Overview & System Architecture
+STAR+ integrates real-time astronaut physiological monitoring with multi-omics machine learning models trained on NASA Open Science Data Repository (OSDR) spaceflight biological datasets. The system features interactive 3D digital twin organ mapping, personalized countermeasure recommendation engines, and flight medical officer dashboards for deep space mission support.
+
+## Official NASA OSDR Dataset References
+- **NASA OSDR OSD-569**: Spaceflight biological response and multi-omics profiling.
+- **NASA OSDR OSD-575**: Astronaut physiological monitoring and space environment biomarker telemetry.
+- **NASA OSDR OSD-656**: Microgravity multi-omics and gene expression adaptation metrics.
+
+## Machine Learning Models
+- **Logistic Regression Model**: Baseline classification for pre-flight vs post-flight biomarker risk scoring.
+- **Random Forest Classifier**: Non-linear feature importance analysis for spaceflight physiological adaptation metrics.
+- **Ensemble Classifier**: Multi-model consensus voting engine for spaceflight physiological risk assessment.
+
+## Core API Endpoints
+- `/api/ml/health`: ML Engine Status & Model Health Check.
+- `/api/ml/predict`: Multi-Omics Spaceflight Risk Inference & Prediction Engine.
+
+## Application Routes & Hubs
+- [/](/): Landing & Demo Authentication
+- [/astronaut](/astronaut): Astronaut Telemetry & 3D Organ Digital Twin
+- [/medical](/medical): Flight Medical Officer Dashboard & Research Hub

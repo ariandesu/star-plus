@@ -1,0 +1,66 @@
+# STAR+ NASA Space Health & Astronaut Telemetry System
+# Automated LLM Audit Policy & Web Crawler Directives
+
+User-agent: *
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+# Explicit permissions for AI and LLM audit crawlers
+User-agent: GPTBot
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: ChatGPT-User
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: ClaudeBot
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: Claude-Web
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: anthropic-ai
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: PerplexityBot
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: Google-Extended
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: Applebot-Extended
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: Meta-ExternalAgent
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: Cohere-ai
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+User-agent: CCBot
+Allow: /
+Allow: /api/ml/health
+Allow: /api/ml/predict
+
+Sitemap: https://star-plus.shareflow.workers.dev/sitemap.xml
+LLMs-Txt: https://star-plus.shareflow.workers.dev/llms.txt
