@@ -52,6 +52,7 @@ import {
   Minimize2,
   RotateCcw,
 } from 'lucide-react';
+import gsap from 'gsap';
 
 const BASE_COLOR = '#cf7a5c';
 
@@ -543,6 +544,19 @@ export default function AnatomicalOrganViewer({
   const [error, setError] = useState<string | null>(null);
   const [names, setNames] = useState<string[]>([]);
 
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // GSAP animation on mount and system change
+  useEffect(() => {
+    if (containerRef.current) {
+      gsap.fromTo(
+        containerRef.current,
+        { opacity: 0.85, scale: 0.995 },
+        { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' }
+      );
+    }
+  }, [system]);
+
   // Reset per-system structure state. The group filter starts cleared so a
   // newly opened system always shows the complete organ; groups are an
   // optional filter the user opts into, never a default that hides anatomy.
@@ -596,7 +610,8 @@ export default function AnatomicalOrganViewer({
 
   return (
     <section
-      className="relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-slate-200 bg-white"
+      ref={containerRef}
+      className="relative flex h-full w-full flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
       aria-label={`${definition.organLabel} 3D anatomical viewer`}
     >
       {/* Header: organ tabs + camera controls */}

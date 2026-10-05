@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import TopHeader from '@/components/TopHeader';
 import RouteGuard from '@/components/RouteGuard';
@@ -9,6 +9,7 @@ import MetricDetailModal from '@/components/MetricDetailModal';
 import DoctorHealthOverviewCard from '@/components/DoctorHealthOverviewCard';
 import type { OrganSystemKey } from '@/services/organHealthService';
 import { ORGAN_SYSTEM_ACCENT } from '@/services/organHealthService';
+import gsap from 'gsap';
 
 const AnatomicalOrganViewer = dynamic(
   () => import('@/components/three/AnatomicalOrganViewer'),
@@ -110,11 +111,38 @@ export default function MedicalPage() {
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<any | null>(null);
 
+  // Animation Refs
+  const leftColRef = useRef<HTMLDivElement>(null);
+  const rightColRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const s = authService.getSession();
     setSession(s);
     setDatasetRecords(DataAdapterService.getNormalizedAstronautRecords());
   }, []);
+
+  // GSAP Entrance animation for Left and Right columns
+  useEffect(() => {
+    if (activeTab === 'CLINICAL') {
+      const ctx = gsap.context(() => {
+        if (leftColRef.current) {
+          gsap.fromTo(
+            leftColRef.current,
+            { opacity: 0, x: -18 },
+            { opacity: 1, x: 0, duration: 0.6, ease: 'power3.out' }
+          );
+        }
+        if (rightColRef.current) {
+          gsap.fromTo(
+            rightColRef.current,
+            { opacity: 0, x: 18 },
+            { opacity: 1, x: 0, duration: 0.6, delay: 0.1, ease: 'power3.out' }
+          );
+        }
+      });
+      return () => ctx.revert();
+    }
+  }, [activeTab]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -144,7 +172,7 @@ export default function MedicalPage() {
   };
 
   const currentCrewItem = CREW_DETAILS.find(c => c.id === selectedAstronautId) || CREW_DETAILS[0];
-  const currentAstronaut = MOCK_ASTRONAUTS.find(a => a.id === selectedAstronautId) || MOCK_ASTRONAUTS[0];
+  const _currentAstronaut = MOCK_ASTRONAUTS.find(a => a.id === selectedAstronautId) || MOCK_ASTRONAUTS[0];
 
   const filteredCrew = CREW_DETAILS.filter(c => {
     if (statusFilter === 'ALL') return true;
@@ -159,6 +187,14 @@ export default function MedicalPage() {
     }
     return true;
   });
+
+  const handleMouseEnterCard = (e: React.MouseEvent<HTMLElement>) => {
+    gsap.to(e.currentTarget, { y: -2, duration: 0.2, ease: 'power2.out' });
+  };
+
+  const handleMouseLeaveCard = (e: React.MouseEvent<HTMLElement>) => {
+    gsap.to(e.currentTarget, { y: 0, duration: 0.2, ease: 'power2.out' });
+  };
 
   return (
     <RouteGuard allow={['medical']}>
@@ -177,55 +213,59 @@ export default function MedicalPage() {
 
       {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed top-20 right-6 z-50 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700 text-xs font-bold flex items-center gap-2 animate-bounce">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <div className="fixed top-20 right-6 z-50 bg-[#007AFF] text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl border border-blue-400/40 flex items-center gap-2 animate-bounce">
+          <CheckCircle2 className="w-4 h-4 text-white" />
           <span>{toastMessage}</span>
         </div>
       )}
 
-      {/* Main Content Layout */}
-      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Main Content Area */}
+      <main className="flex-1 max-w-[1600px] w-full mx-auto p-4 sm:p-6 space-y-6">
         
-        {/* Navigation Tabs */}
-        <div className="flex items-center justify-between border-b border-slate-200/80 pb-3">
+        {/* Navigation Tabs Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/95 backdrop-blur-xl p-3 rounded-3xl border border-slate-200/80 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={() => setActiveTab('CLINICAL')}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition ${
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 ${
                 activeTab === 'CLINICAL'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/60'
+                  ? 'bg-[#007AFF] text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100/80'
               }`}
             >
-              Crew Clinical Surveillance
+              <Activity className="w-4 h-4" />
+              <span>Clinical Surveillance (Active Crew)</span>
             </button>
             <button
+              type="button"
               onClick={() => setActiveTab('DATASET')}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 ${
                 activeTab === 'DATASET'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/60'
+                  ? 'bg-[#007AFF] text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100/80'
               }`}
             >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
-              <span>Research Dataset (1,000 Records)</span>
+              <FileSpreadsheet className="w-4 h-4" />
+              <span>NASA ML Research Dataset (1,000 Records)</span>
             </button>
             <button
+              type="button"
               onClick={handleRunQaSuite}
-              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition flex items-center gap-1.5 ${
+              className={`px-4 py-2 rounded-2xl text-xs font-extrabold transition-all duration-200 flex items-center gap-2 ${
                 activeTab === 'TEST_SUITE'
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                  : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200/60'
+                  ? 'bg-[#007AFF] text-white shadow-sm'
+                  : 'text-slate-600 hover:bg-slate-100/80'
               }`}
             >
-              <PlayCircle className="w-3.5 h-3.5 text-emerald-500" />
-              <span>QA Test Suite (Dataset B)</span>
+              <PlayCircle className="w-4 h-4" />
+              <span>QA Evaluation Suite (Dataset B)</span>
             </button>
           </div>
 
-          <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-slate-500">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
-            <span>4 Crew Members Active</span>
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+            <Clock className="w-3.5 h-3.5 text-[#007AFF]" />
+            <span>Mission MET: Day 147 • 08:42 UTC</span>
           </div>
         </div>
 
@@ -235,7 +275,7 @@ export default function MedicalPage() {
             {/* ========================================================= */}
             {/* LEFT COLUMN (~40% desktop, 5 cols out of 12)             */}
             {/* ========================================================= */}
-            <div className="lg:col-span-5 space-y-5">
+            <div ref={leftColRef} className="lg:col-span-5 space-y-5">
               
               {/* A) 3D Anatomical Organ Viewer */}
               <div className="h-[520px] min-h-[420px]">
@@ -250,7 +290,11 @@ export default function MedicalPage() {
               <DoctorHealthOverviewCard />
 
               {/* C) Crew Members (4) Card */}
-              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm space-y-4">
+              <div
+                onMouseEnter={handleMouseEnterCard}
+                onMouseLeave={handleMouseLeaveCard}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4 transition-all"
+              >
                 {/* Header with Filter Dropdown */}
                 <div className="flex items-center justify-between">
                   <h3 className="text-sm font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
@@ -284,8 +328,8 @@ export default function MedicalPage() {
                         onClick={() => setSelectedAstronautId(c.id)}
                         className={`w-full p-3.5 rounded-2xl border transition-all text-left flex flex-col gap-2.5 ${
                           isSelected
-                            ? 'bg-blue-50/70 border-blue-500 shadow-sm ring-1 ring-blue-400/40'
-                            : 'bg-slate-50/60 border-slate-200/80 hover:bg-slate-100/80'
+                            ? 'bg-blue-50/70 border-[#007AFF] shadow-xs ring-1 ring-[#007AFF]/40'
+                            : 'bg-slate-50/60 border-slate-200/80 hover:bg-slate-100/80 hover:border-slate-300'
                         }`}
                       >
                         {/* Top Line: Name, Role, Day, Badges */}
@@ -325,19 +369,19 @@ export default function MedicalPage() {
                         {/* Vitals & Metrics Breakdown Line */}
                         <div className="grid grid-cols-4 gap-1.5 pt-1 border-t border-slate-200/50 text-[10px] font-semibold text-slate-600">
                           <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
-                            <span className="text-slate-400 block text-[9px] uppercase">HR</span>
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">HR</span>
                             <span className="font-extrabold text-slate-900">{c.hr}</span>
                           </div>
                           <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
-                            <span className="text-slate-400 block text-[9px] uppercase">BP</span>
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">BP</span>
                             <span className="font-extrabold text-slate-900">{c.bp}</span>
                           </div>
                           <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
-                            <span className="text-slate-400 block text-[9px] uppercase">Sleep %</span>
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">Sleep %</span>
                             <span className="font-extrabold text-slate-900">{c.sleepScore}</span>
                           </div>
                           <div className="bg-white/80 px-2 py-1 rounded-lg border border-slate-100">
-                            <span className="text-slate-400 block text-[9px] uppercase">Sleep h</span>
+                            <span className="text-slate-400 block text-[9px] uppercase font-bold">Sleep h</span>
                             <span className="font-extrabold text-slate-900">{c.sleepHours}</span>
                           </div>
                         </div>
@@ -352,10 +396,14 @@ export default function MedicalPage() {
             {/* ========================================================= */}
             {/* RIGHT COLUMN (~60% desktop, 7 cols out of 12)            */}
             {/* ========================================================= */}
-            <div className="lg:col-span-7 space-y-6">
+            <div ref={rightColRef} className="lg:col-span-7 space-y-6">
               
               {/* A) Multi-System Physiological Deviation Matrix */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+              <div
+                onMouseEnter={handleMouseEnterCard}
+                onMouseLeave={handleMouseLeaveCard}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4 transition-all"
+              >
                 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
@@ -379,7 +427,7 @@ export default function MedicalPage() {
                     <button
                       type="button"
                       onClick={() => setIsAnalysisOpen(true)}
-                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer shrink-0"
+                      className="px-4 py-2 rounded-xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer shrink-0"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
                       <span>⚡ Why was this flagged?</span>
@@ -441,23 +489,43 @@ export default function MedicalPage() {
                           </span>
                         </td>
                       </tr>
+                      <tr>
+                        <td className="py-3 px-3 font-bold text-slate-900">Cognitive Reaction Speed</td>
+                        <td className="py-3 px-3 font-semibold text-slate-700">
+                          {currentCrewItem.status === 'WATCH' ? '242 ms' : '210 ms'}
+                        </td>
+                        <td className="py-3 px-3 text-slate-500">205 ms</td>
+                        <td className={`py-3 px-3 font-bold ${currentCrewItem.status === 'WATCH' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          {currentCrewItem.status === 'WATCH' ? '+18.0%' : '+2.4%'}
+                        </td>
+                        <td className="py-3 px-3 text-right">
+                          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            currentCrewItem.status === 'WATCH' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                            {currentCrewItem.status === 'WATCH' ? 'FATIGUE SLOW' : 'NOMINAL'}
+                          </span>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>
-
               </div>
 
-              {/* B) Clinical Notes & Recommendations Card */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-3">
+              {/* B) Clinical Notes & Recommendations Log */}
+              <div
+                onMouseEnter={handleMouseEnterCard}
+                onMouseLeave={handleMouseLeaveCard}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4 transition-all"
+              >
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
-                    <FileText className="w-4 h-4 text-blue-600" />
+                    <FileText className="w-4 h-4 text-[#007AFF]" />
                     <span>Clinical Notes ({currentCrewItem.name})</span>
                   </h3>
                   <span className="text-[10px] font-bold text-slate-400">CONFIDENTIAL MEDICAL LOG</span>
                 </div>
 
-                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-100 text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap max-h-[120px] overflow-y-auto">
+                <div className="p-4 bg-slate-50/80 rounded-2xl border border-slate-200/60 text-xs text-slate-700 leading-relaxed font-mono whitespace-pre-wrap max-h-[120px] overflow-y-auto">
                   {clinicalNotes[selectedAstronautId] || 'No active notes logged for this astronaut.'}
                 </div>
 
@@ -468,12 +536,12 @@ export default function MedicalPage() {
                     onChange={(e) => setNewNote(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') handleAddNote(); }}
                     placeholder={`Log clinical recommendation for ${currentCrewItem.name}...`}
-                    className="flex-1 px-4 py-2 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="flex-1 px-4 py-2 rounded-xl bg-slate-100/90 border border-slate-200/60 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
                   />
                   <button
                     type="button"
                     onClick={handleAddNote}
-                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer"
+                    className="px-4 py-2 rounded-xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold transition cursor-pointer shadow-xs"
                   >
                     Add Note
                   </button>
@@ -481,7 +549,11 @@ export default function MedicalPage() {
               </div>
 
               {/* C) Real-Time Alert Triage Feed Card */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+              <div
+                onMouseEnter={handleMouseEnterCard}
+                onMouseLeave={handleMouseLeaveCard}
+                className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4 transition-all"
+              >
                 <div className="flex items-center justify-between">
                   <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 text-amber-500" />
@@ -496,7 +568,7 @@ export default function MedicalPage() {
                   {alerts.map((alert) => (
                     <div
                       key={alert.id}
-                      className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                     >
                       <div>
                         <div className="flex items-center gap-2">
@@ -519,7 +591,7 @@ export default function MedicalPage() {
                           <button
                             type="button"
                             onClick={() => handleAcknowledgeAlert(alert.id)}
-                            className="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-2xs transition cursor-pointer"
+                            className="px-3 py-1.5 rounded-xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold shadow-xs transition cursor-pointer"
                           >
                             Acknowledge
                           </button>
@@ -534,10 +606,14 @@ export default function MedicalPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 
                 {/* Card 1: Mission Day 147 */}
-                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
+                <div
+                  onMouseEnter={handleMouseEnterCard}
+                  onMouseLeave={handleMouseLeaveCard}
+                  className="bg-white/95 backdrop-blur-xl rounded-3xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-3 transition-all"
+                >
                   <div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-extrabold text-blue-600 uppercase tracking-wider">PRIMARY MISSION</span>
+                      <span className="text-[10px] font-extrabold text-[#007AFF] uppercase tracking-wider">PRIMARY MISSION</span>
                       <span className="text-[10px] font-bold text-slate-400">SURFACE OPS</span>
                     </div>
                     <h4 className="text-lg font-black text-slate-900 mt-1">Mission Day 147</h4>
@@ -547,10 +623,10 @@ export default function MedicalPage() {
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs font-bold">
                       <span className="text-slate-600">Progress</span>
-                      <span className="text-blue-600 font-extrabold">62%</span>
+                      <span className="text-[#007AFF] font-extrabold">62%</span>
                     </div>
                     <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200/60">
-                      <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full" style={{ width: '62%' }} />
+                      <div className="h-full bg-gradient-to-r from-[#007AFF] to-cyan-500 rounded-full" style={{ width: '62%' }} />
                     </div>
                     <p className="text-[10px] text-slate-400 font-medium pt-0.5">
                       62% of planned mission duration completed.
@@ -559,7 +635,11 @@ export default function MedicalPage() {
                 </div>
 
                 {/* Card 2: Countermeasure Compliance */}
-                <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm flex flex-col justify-between space-y-3">
+                <div
+                  onMouseEnter={handleMouseEnterCard}
+                  onMouseLeave={handleMouseLeaveCard}
+                  className="bg-white/95 backdrop-blur-xl rounded-3xl p-5 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col justify-between space-y-3 transition-all"
+                >
                   <div>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-extrabold text-emerald-600 uppercase tracking-wider">ARED &amp; TREADMILL</span>
@@ -589,10 +669,10 @@ export default function MedicalPage() {
 
         {/* 1,000 Records Research Dataset View */}
         {activeTab === 'DATASET' && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 className="text-lg font-black text-slate-900">Research Astronaut Dataset (1,000 Records)</h2>
+                <h2 className="text-lg font-black text-slate-900 tracking-tight">Research Astronaut Dataset (1,000 Records)</h2>
                 <p className="text-xs text-slate-500">Normalized health telemetry dataset for Space Apps statistical analysis.</p>
               </div>
 
@@ -602,7 +682,7 @@ export default function MedicalPage() {
                   value={datasetSearch}
                   onChange={(e) => setDatasetSearch(e.target.value)}
                   placeholder="Search ID, Name, Symptom..."
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200/60 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
                 />
               </div>
             </div>
@@ -623,8 +703,8 @@ export default function MedicalPage() {
                 </thead>
                 <tbody className="divide-y divide-slate-100 font-mono">
                   {filteredDataset.slice(0, 50).map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-50">
-                      <td className="py-2.5 px-3 font-bold text-blue-600">{r.id}</td>
+                    <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-2.5 px-3 font-bold text-[#007AFF]">{r.id}</td>
                       <td className="py-2.5 px-3 font-sans font-semibold text-slate-800">{r.name}</td>
                       <td className="py-2.5 px-3 text-slate-600">{r.age}</td>
                       <td className="py-2.5 px-3 text-slate-600">{r.missionDays}d</td>
@@ -649,10 +729,10 @@ export default function MedicalPage() {
 
         {/* QA Test Suite (Dataset B) View */}
         {activeTab === 'TEST_SUITE' && qaReport && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-6">
+          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-6">
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div>
-                <h2 className="text-xl font-black text-slate-900">Dataset B QA Evaluation Report</h2>
+                <h2 className="text-xl font-black text-slate-900 tracking-tight">Dataset B QA Evaluation Report</h2>
                 <p className="text-xs text-slate-500">Automated decision support accuracy evaluation against 10 test case scenarios.</p>
               </div>
 
@@ -663,7 +743,7 @@ export default function MedicalPage() {
                 <button
                   type="button"
                   onClick={handleRunQaSuite}
-                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-[#007AFF] hover:bg-blue-600 text-white text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shadow-xs"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   <span>Re-run Test Suite</span>
@@ -673,7 +753,7 @@ export default function MedicalPage() {
 
             <div className="space-y-3">
               {qaReport.results.map((res) => (
-                <div key={res.scenarioId} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
+                <div key={res.scenarioId} className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200/70 flex items-center justify-between">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-slate-900">{res.scenarioId}: {res.astronautName}</span>
