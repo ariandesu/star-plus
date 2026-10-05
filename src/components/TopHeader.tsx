@@ -250,7 +250,7 @@ export default function TopHeader({
               {/* NASA ML Status Pill */}
               <span className={`hidden md:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${isMlOnline ? 'bg-emerald-50 text-emerald-700 border-emerald-200/60' : 'bg-amber-50 text-amber-700 border-amber-200/60'} border`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${isMlOnline ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`} />
-                NASA ML
+                NASA ML Research Dataset (OSDR Biomarkers)
               </span>
             </div>
 

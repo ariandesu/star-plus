@@ -24,8 +24,15 @@ import { TestRunnerService, TestSuiteReport } from '../../services/testRunnerSer
 import { 
   AlertTriangle, CheckCircle2, 
   Activity, Heart, Moon, Zap, User, RefreshCw, ChevronRight, FileSpreadsheet, PlayCircle, Filter,
-  Sparkles, FileText, Check, Clock, ShieldCheck, Flame, Table, Beaker
+  Sparkles, FileText, Check, Clock, ShieldCheck, Flame, Table, Beaker,
+  ExternalLink, Download, Database, BrainCircuit, Info, Layers, ChevronDown, Award, Search
 } from 'lucide-react';
+import { 
+  NASA_MASTER_BIOMARKER_DATASET, 
+  NASA_OSDR_SOURCES, 
+  RANDOM_FOREST_FEATURE_IMPORTANCE,
+  NasaBiomarkerRecord
+} from '@/data/nasaMasterBiomarkerDataset';
 
 const CREW_DETAILS = [
   {
@@ -100,6 +107,12 @@ export default function MedicalPage() {
 
   // Dataset A state (1000 research records)
   const [datasetRecords, setDatasetRecords] = useState<NormalizedAstronautRecord[]>([]);
+  // NASA OSDR Dataset explorer state
+  const [nasaSubjectFilter, setNasaSubjectFilter] = useState<'ALL' | 'C001' | 'C002' | 'C003' | 'C004'>('ALL');
+  const [nasaPhaseFilter, setNasaPhaseFilter] = useState<'ALL' | 'PRE_FLIGHT' | 'POST_FLIGHT'>('ALL');
+  const [nasaTimepointFilter, setNasaTimepointFilter] = useState<string>('ALL');
+  const [nasaPanelTab, setNasaPanelTab] = useState<'OVERVIEW' | 'CMP' | 'CARDIO' | 'IMMUNE' | 'URINE' | 'ALL_FEATURES'>('OVERVIEW');
+  const [nasaSearch, setNasaSearch] = useState('');
   const [datasetFilter, setDatasetFilter] = useState<'ALL' | 'WATCH' | 'CRITICAL' | 'NOMINAL'>('ALL');
   const [datasetSearch, setDatasetSearch] = useState('');
   const [activeTab, setActiveTab] = useState<'CLINICAL' | 'DATASET' | 'TEST_SUITE'>('CLINICAL');
@@ -247,7 +260,7 @@ export default function MedicalPage() {
               }`}
             >
               <Table className="w-4 h-4" />
-              <span>Research Dataset (1,000 Records)</span>
+              <span>NASA ML Research Dataset (OSDR Biomarkers)</span>
             </button>
             <button
               type="button"
@@ -669,63 +682,478 @@ export default function MedicalPage() {
           </div>
         )}
 
-        {/* 1,000 Records Research Dataset View */}
+                {/* NASA OSDR Master Biomarker ML Dataset Explorer View */}
         {activeTab === 'DATASET' && (
-          <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h2 className="text-lg font-black text-slate-900 tracking-tight">Research Astronaut Dataset (1,000 Records)</h2>
-                <p className="text-xs text-slate-500">Normalized health telemetry dataset for Space Apps statistical analysis.</p>
+          <div className="space-y-6">
+            {/* Header & Controls Card */}
+            <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-6">
+              
+              {/* Header Title & Actions Bar */}
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 uppercase tracking-wider">
+                      NASA OSDR ML Benchmark
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                      Inspiration4 Mission
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-100 text-purple-800 uppercase tracking-wider">
+                      28 Samples • 611 Features
+                    </span>
+                  </div>
+                  <h2 className="text-xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                    NASA OSDR Master Biomarker Research Dataset
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-1 max-w-3xl">
+                    Physiological & molecular biomarker telemetry tracking spaceflight-induced adaptation across 4 commercial astronauts (C001-C004) from pre-flight baseline (L-92) to post-flight recovery (R+194). Integrated with out-of-fold ML predictions (RandomForest & LogisticRegression).
+                  </p>
+                </div>
+
+                {/* Top Action Buttons: NASA OSDR Links & CSV Download */}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  <a
+                    href="https://osdr.nasa.gov"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                    <span>OSDR Portal</span>
+                  </a>
+                  <a
+                    href="https://osdr.nasa.gov/bio/repo/data/studies/OSD-569"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200/60 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-blue-600" />
+                    <span>OSD-569 (CBC)</span>
+                  </a>
+                  <a
+                    href="https://osdr.nasa.gov/bio/repo/data/studies/OSD-575"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/60 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>OSD-575 (Metabolic)</span>
+                  </a>
+                  <a
+                    href="https://osdr.nasa.gov/bio/repo/data/studies/OSD-656"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/60 text-xs font-bold transition flex items-center gap-1.5 shadow-2xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-amber-600" />
+                    <span>OSD-656 (Urine)</span>
+                  </a>
+                  <a
+                    href="/data/NASA_MASTER_BIOMARKER.csv"
+                    download="NASA_MASTER_BIOMARKER.csv"
+                    className="px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-sm transition flex items-center gap-1.5 cursor-pointer ml-1"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    <span>Download CSV</span>
+                  </a>
+                </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={datasetSearch}
-                  onChange={(e) => setDatasetSearch(e.target.value)}
-                  placeholder="Search ID, Name, Symptom..."
-                  className="px-3 py-1.5 rounded-xl bg-slate-100/90 border border-slate-200/60 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-[#007AFF]/30"
-                />
-              </div>
-            </div>
+              {/* KPI Performance Cards Bar */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/60 border border-blue-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-blue-900 uppercase tracking-wider">RandomForest OOF Accuracy</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-600 text-white">96.4%</span>
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-slate-900">27 / 28</span>
+                    <span className="text-xs text-slate-500 font-semibold">samples correctly classified</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-1">Top predictors: CXCL2, IL-17E/IL-25, CTACK, MCV, MPO</p>
+                </div>
 
-            <div className="overflow-x-auto max-h-[500px]">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 sticky top-0">
-                  <tr className="border-b border-slate-200 text-slate-400 font-bold">
-                    <th className="py-2.5 px-3">ASTRONAUT ID</th>
-                    <th className="py-2.5 px-3">NAME</th>
-                    <th className="py-2.5 px-3">AGE</th>
-                    <th className="py-2.5 px-3">MISSION DAYS</th>
-                    <th className="py-2.5 px-3">HEART RATE</th>
-                    <th className="py-2.5 px-3">BLOOD PRESSURE</th>
-                    <th className="py-2.5 px-3">PRIMARY SYMPTOM</th>
-                    <th className="py-2.5 px-3 text-right">STATUS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 font-mono">
-                  {filteredDataset.slice(0, 50).map((r) => (
-                    <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="py-2.5 px-3 font-bold text-[#007AFF]">{r.id}</td>
-                      <td className="py-2.5 px-3 font-sans font-semibold text-slate-800">{r.name}</td>
-                      <td className="py-2.5 px-3 text-slate-600">{r.age}</td>
-                      <td className="py-2.5 px-3 text-slate-600">{r.missionDays}d</td>
-                      <td className="py-2.5 px-3 font-bold text-slate-900">{r.heartRate} bpm</td>
-                      <td className="py-2.5 px-3 text-slate-600">{r.bloodPressure}</td>
-                      <td className="py-2.5 px-3 font-sans text-slate-700">{r.symptom}</td>
-                      <td className="py-2.5 px-3 text-right font-sans">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          r.status === 'CRITICAL' ? 'bg-red-100 text-red-800' :
-                          r.status === 'WATCH' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {r.status}
-                        </span>
-                      </td>
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50/60 border border-emerald-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-emerald-900 uppercase tracking-wider">LogisticRegression OOF Accuracy</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white">96.4%</span>
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-slate-900">27 / 28</span>
+                    <span className="text-xs text-slate-500 font-semibold">samples correctly classified</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-1">Linear decision boundary with standard scaling & L2 regularization</p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-amber-50/40 border border-slate-200/80">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-extrabold text-slate-700 uppercase tracking-wider">Majority Baseline</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-slate-600 text-white">57.1%</span>
+                  </div>
+                  <div className="mt-2 flex items-baseline gap-2">
+                    <span className="text-2xl font-black text-slate-900">16 / 28</span>
+                    <span className="text-xs text-slate-500 font-semibold">benchmark baseline</span>
+                  </div>
+                  <p className="text-[11px] text-slate-600 mt-1">Always predicts majority class (POST_FLIGHT: 16/28)</p>
+                </div>
+              </div>
+
+              {/* Filters & Assay Panel Controls */}
+              <div className="space-y-4 pt-2 border-t border-slate-100">
+                
+                {/* Filter Toolbar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/80 p-3 rounded-2xl border border-slate-200/60">
+                  
+                  {/* Subject Dropdown Filter */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-600">Subject:</span>
+                    <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                      {(['ALL', 'C001', 'C002', 'C003', 'C004'] as const).map((subj) => (
+                        <button
+                          key={subj}
+                          type="button"
+                          onClick={() => setNasaSubjectFilter(subj)}
+                          className={`px-3 py-1 rounded-lg transition ${
+                            nasaSubjectFilter === subj
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          }`}
+                        >
+                          {subj === 'ALL' ? 'All (4)' : subj}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Flight Phase Filter */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-600">Phase:</span>
+                    <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 text-xs font-bold">
+                      {(['ALL', 'PRE_FLIGHT', 'POST_FLIGHT'] as const).map((phase) => (
+                        <button
+                          key={phase}
+                          type="button"
+                          onClick={() => setNasaPhaseFilter(phase)}
+                          className={`px-3 py-1 rounded-lg transition ${
+                            nasaPhaseFilter === phase
+                              ? 'bg-blue-600 text-white shadow-sm'
+                              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          }`}
+                        >
+                          {phase === 'ALL' ? 'All Phases' : phase === 'PRE_FLIGHT' ? 'PRE-FLIGHT (12)' : 'POST-FLIGHT (16)'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Timepoint Dropdown Filter */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-slate-600">Timepoint:</span>
+                    <select
+                      value={nasaTimepointFilter}
+                      onChange={(e) => setNasaTimepointFilter(e.target.value)}
+                      className="px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
+                    >
+                      <option value="ALL">All Timepoints (7)</option>
+                      <option value="L-92">L-92 (Pre-flight 92 days)</option>
+                      <option value="L-44">L-44 (Pre-flight 44 days)</option>
+                      <option value="L-3">L-3 (Pre-flight 3 days)</option>
+                      <option value="R+1">R+1 (Return +1 day)</option>
+                      <option value="R+45">R+45 (Return +45 days)</option>
+                      <option value="R+82">R+82 (Return +82 days)</option>
+                      <option value="R+194">R+194 (Return +194 days)</option>
+                    </select>
+                  </div>
+
+                  {/* Search Box */}
+                  <div className="relative flex-1 min-w-[200px] max-w-xs">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-slate-400" />
+                    <input
+                      type="text"
+                      value={nasaSearch}
+                      onChange={(e) => setNasaSearch(e.target.value)}
+                      placeholder="Search sample, marker, value..."
+                      className="w-full pl-8 pr-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                    />
+                  </div>
+
+                </div>
+
+                {/* Assay Panel Tabs Selector */}
+                <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto pb-1">
+                  {[
+                    { id: 'OVERVIEW', label: 'Overview / CBC Panel', icon: Activity },
+                    { id: 'CMP', label: 'Metabolic CMP Panel', icon: Heart },
+                    { id: 'CARDIO', label: 'Cardiovascular Panel', icon: Zap },
+                    { id: 'IMMUNE', label: 'Immune & Cytokine Panel', icon: Flame },
+                    { id: 'URINE', label: 'Urine & Renal Panel', icon: Filter },
+                    { id: 'ALL_FEATURES', label: 'All 607 Features Matrix', icon: Table }
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = nasaPanelTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setNasaPanelTab(tab.id as any)}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs shrink-0 transition ${
+                          isActive
+                            ? 'bg-blue-600 text-white shadow-sm'
+                            : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                        }`}
+                      >
+                        <Icon className="w-3.5 h-3.5" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+              </div>
+
+              {/* Data Table */}
+              <div className="overflow-x-auto rounded-2xl border border-slate-200/80 max-h-[560px]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-100/90 sticky top-0 z-10 backdrop-blur-md">
+                    <tr className="border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[11px]">
+                      <th className="py-3 px-4">Sample & Subject</th>
+                      <th className="py-3 px-3">Flight Phase</th>
+                      <th className="py-3 px-4">Biomarker Measurements ({nasaPanelTab})</th>
+                      <th className="py-3 px-4">ML Out-of-Fold Predictions</th>
+                      <th className="py-3 px-3 text-right">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 font-mono bg-white">
+                    {NASA_MASTER_BIOMARKER_DATASET.filter((record) => {
+                      if (nasaSubjectFilter !== 'ALL' && record.subjectId !== nasaSubjectFilter) return false;
+                      if (nasaPhaseFilter !== 'ALL' && record.flightPhase !== nasaPhaseFilter) return false;
+                      if (nasaTimepointFilter !== 'ALL' && record.timepoint !== nasaTimepointFilter) return false;
+                      if (nasaSearch.trim()) {
+                        const q = nasaSearch.toLowerCase();
+                        const matchSample = record.sampleName.toLowerCase().includes(q);
+                        const matchSubject = record.subjectId.toLowerCase().includes(q);
+                        const matchTimepoint = record.timepoint.toLowerCase().includes(q);
+                        const matchPhase = record.flightPhase.toLowerCase().includes(q);
+                        return matchSample || matchSubject || matchTimepoint || matchPhase;
+                      }
+                      return true;
+                    }).map((record) => {
+                      const rfPred = record.predictions?.RandomForest;
+                      const lrPred = record.predictions?.LogisticRegression;
+                      const mbPred = record.predictions?.MajorityBaseline;
+                      
+                      const rfCorrect = rfPred?.predLabel === record.flightPhase;
+                      const lrCorrect = lrPred?.predLabel === record.flightPhase;
+
+                      return (
+                        <tr key={record.sampleName} className="hover:bg-slate-50/90 transition-colors">
+                          {/* Sample & Subject Column */}
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col">
+                              <span className="font-bold text-blue-600 text-xs font-sans">{record.sampleName}</span>
+                              <div className="flex items-center gap-1.5 mt-0.5">
+                                <span className="px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 text-[10px] font-bold font-sans">
+                                  Subject {record.subjectId}
+                                </span>
+                                <span className="px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-700 text-[10px] font-bold font-sans">
+                                  {record.timepoint}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* Flight Phase Column */}
+                          <td className="py-3 px-3">
+                            <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                              record.flightPhase === 'POST_FLIGHT' 
+                                ? 'bg-amber-100 text-amber-800 border border-amber-300/60' 
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                            }`}>
+                              {record.flightPhase}
+                            </span>
+                          </td>
+
+                          {/* Biomarker Measurement Values Column based on active panel tab */}
+                          <td className="py-3 px-4 text-xs font-mono text-slate-700">
+                            {nasaPanelTab === 'OVERVIEW' && (
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                <span>WBC: <strong className="text-slate-900">{record.cbc.white_blood_cell_count_value_thousand_per_microliter} K/µL</strong></span>
+                                <span>RBC: <strong className="text-slate-900">{record.cbc.red_blood_cell_count_value_million_per_microliter} M/µL</strong></span>
+                                <span>HGB: <strong className="text-slate-900">{record.cbc.hemoglobin_value_percent}%</strong></span>
+                                <span>MCV: <strong className="text-slate-900">{record.cbc.mcv_value_femtoliter} fL</strong></span>
+                                <span>PLT: <strong className="text-slate-900">{record.cbc.platelet_count_value_thousand_per_microliter} K/µL</strong></span>
+                                <span>NEUT: <strong className="text-slate-900">{record.cbc.neutrophils_value_percent}%</strong></span>
+                              </div>
+                            )}
+                            {nasaPanelTab === 'CMP' && (
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                <span>GLU: <strong className="text-slate-900">{record.cmp.glucose_value_milligram_per_deciliter} mg/dL</strong></span>
+                                <span>Na: <strong className="text-slate-900">{record.cmp.sodium_value_millimol_per_liter} mmol/L</strong></span>
+                                <span>K: <strong className="text-slate-900">{record.cmp.potassium_value_millimol_per_liter} mmol/L</strong></span>
+                                <span>CRE: <strong className="text-slate-900">{record.cmp.creatinine_value_milligram_per_deciliter} mg/dL</strong></span>
+                                <span>ALT: <strong className="text-slate-900">{record.cmp.alt_value_units_per_liter} U/L</strong></span>
+                                <span>AST: <strong className="text-slate-900">{record.cmp.ast_value_units_per_liter} U/L</strong></span>
+                              </div>
+                            )}
+                            {nasaPanelTab === 'CARDIO' && (
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                <span>CRP: <strong className="text-slate-900">{record.cardio.crp_concentration_picogram_per_milliliter} pg/mL</strong></span>
+                                <span>CRP %: <strong className="text-slate-900">{record.cardio.crp_percent}%</strong></span>
+                                <span>L-Selectin: <strong className="text-slate-900">{record.cardio.l_selectin_concentration_picogram_per_milliliter} pg/mL</strong></span>
+                                <span>CTACK: <strong className="text-slate-900">{record.cardio.ctack_concentration_picogram_per_milliliter} pg/mL</strong></span>
+                              </div>
+                            )}
+                            {nasaPanelTab === 'IMMUNE' && (
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                <span>CXCL2 norm: <strong className="text-slate-900">{record.immune.cxcl2_percent_normalized_value}</strong></span>
+                                <span>IL-17E/25 %: <strong className="text-slate-900">{record.immune.il_17e_per_il_25_percent}%</strong></span>
+                                <span>MPO norm: <strong className="text-slate-900">{record.immune.mpo_percent_normalized_value}</strong></span>
+                                <span>BCA-1 conc: <strong className="text-slate-900">{record.immune.bca_1_concentration_picogram_per_milliliter} pg/mL</strong></span>
+                              </div>
+                            )}
+                            {nasaPanelTab === 'URINE' && (
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                                <span>Spec Gravity: <strong className="text-slate-900">{record.urine.urine_specific_gravity}</strong></span>
+                                <span>pH: <strong className="text-slate-900">{record.urine.urine_ph}</strong></span>
+                                <span>Creatinine: <strong className="text-slate-900">{record.urine.urine_creatinine_mg_dl} mg/dL</strong></span>
+                                <span>Osmolality: <strong className="text-slate-900">{record.urine.urine_osmolality_mOsm_kg} mOsm/kg</strong></span>
+                              </div>
+                            )}
+                            {nasaPanelTab === 'ALL_FEATURES' && (
+                              <div className="text-[11px] font-mono text-slate-600 truncate max-w-md">
+                                <span>607 features extracted (WBC, RBC, CXCL2, IL-17E, CTACK, MCV, MPO, BCA-1, WNT16...)</span>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* ML Out-of-Fold Predictions Column */}
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col gap-1 font-sans">
+                              {/* RandomForest Chip */}
+                              {rfPred && (
+                                <div className="flex items-center gap-1.5 text-[10px]">
+                                  <span className="font-bold text-slate-500 w-6">RF:</span>
+                                  <span className={rfCorrect ? "px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800" : "px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-800"}>
+                                    {rfPred.predLabel} ({(rfPred.probPostFlight * 100).toFixed(1)}%)
+                                  </span>
+                                </div>
+                              )}
+                              {/* LogisticRegression Chip */}
+                              {lrPred && (
+                                <div className="flex items-center gap-1.5 text-[10px]">
+                                  <span className="font-bold text-slate-500 w-6">LR:</span>
+                                  <span className={lrCorrect ? "px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-800" : "px-2 py-0.5 rounded-full font-bold bg-rose-100 text-rose-800"}>
+                                    {lrPred.predLabel} ({(lrPred.probPostFlight * 100).toFixed(1)}%)
+                                  </span>
+                                </div>
+                              )}
+                              {/* Majority Baseline Chip */}
+                              {mbPred && (
+                                <div className="flex items-center gap-1.5 text-[10px]">
+                                  <span className="font-bold text-slate-400 w-6">MB:</span>
+                                  <span className="px-2 py-0.5 rounded-full font-bold bg-slate-100 text-slate-700">
+                                    {mbPred.predLabel} (50.0%)
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* Status / Correctness Column */}
+                          <td className="py-3 px-3 text-right font-sans">
+                            <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                              rfCorrect && lrCorrect
+                                ? 'bg-emerald-100 text-emerald-800 border border-emerald-300/60'
+                                : 'bg-amber-100 text-amber-800 border border-amber-300/60'
+                            }`}>
+                              {rfCorrect && lrCorrect ? '✓ ML MATCH' : '⚠ DISCREPANCY'}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
             </div>
+
+            {/* Data Provenance & NASA OSDR Source Links Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* NASA OSDR Source Dataset Links */}
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Database className="w-4 h-4 text-blue-600" />
+                    <h3 className="text-base font-black text-slate-900">NASA OSDR Dataset Repositories</h3>
+                  </div>
+                  <span className="text-xs font-bold text-slate-400">Official NASA Sources</span>
+                </div>
+
+                <div className="space-y-3">
+                  {NASA_OSDR_SOURCES.map((src) => (
+                    <a
+                      key={src.id}
+                      href={src.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/60 border border-slate-200/70 hover:border-blue-200 transition flex items-start justify-between gap-3"
+                    >
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition">
+                            {src.title}
+                          </span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 transition" />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">{src.description}</p>
+                      </div>
+                      <span className="px-2 py-1 rounded-lg bg-white group-hover:bg-blue-600 group-hover:text-white text-[10px] font-extrabold text-slate-600 border border-slate-200 group-hover:border-blue-600 transition shrink-0">
+                        Open Study ↗
+                      </span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+              {/* RandomForest Top Feature Importance Table */}
+              <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.03)] space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <BrainCircuit className="w-4 h-4 text-purple-600" />
+                    <h3 className="text-base font-black text-slate-900">Top ML Feature Importances</h3>
+                  </div>
+                  <span className="text-xs font-bold text-slate-400">RandomForest Gini</span>
+                </div>
+
+                <div className="overflow-y-auto max-h-[260px] space-y-2 pr-1">
+                  {RANDOM_FOREST_FEATURE_IMPORTANCE.slice(0, 8).map((fi, idx) => (
+                    <div key={fi.feature} className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 text-xs">
+                      <div className="flex items-center gap-2 font-mono">
+                        <span className="w-5 h-5 rounded-lg bg-purple-100 text-purple-800 text-[10px] font-black flex items-center justify-center font-sans">
+                          #{idx + 1}
+                        </span>
+                        <span className="font-bold text-slate-800 truncate max-w-[220px]">{fi.feature}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 bg-slate-200 rounded-full h-2 overflow-hidden hidden sm:block">
+                          <div 
+                            className="bg-purple-600 h-2 rounded-full" 
+                            style={{ width: `${Math.min(100, (fi.importance / 0.06) * 100)}%` }}
+                          />
+                        </div>
+                        <span className="font-mono font-bold text-purple-700 text-[11px]">
+                          {(fi.importance * 100).toFixed(2)}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
           </div>
         )}
 
