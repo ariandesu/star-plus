@@ -74,10 +74,14 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans select-none bg-[url('/images/hero-bg.png')] bg-cover bg-center bg-no-repeat">
-      
-      {/* Background Dim & Blur Overlay */}
-      <div className="absolute inset-0 pointer-events-none z-0 bg-slate-950/25 backdrop-blur-[1px]" />
+    <div className="min-h-screen bg-[#070B14] text-slate-100 flex flex-col justify-between relative overflow-hidden font-sans select-none">
+      {/* Animated Astronaut GIF Background */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-opacity duration-1000"
+        style={{ backgroundImage: "url('/images/hero-astronaut.gif')" }}
+      />
+      {/* Background Dim & Blur Overlay for high readability & contrast */}
+      <div className="absolute inset-0 pointer-events-none z-0 bg-slate-950/40 backdrop-blur-[0.5px]" />
 
       {/* Top Header Navigation */}
       <header className="relative z-20 px-6 sm:px-10 py-4 flex items-center justify-between border-b border-slate-800/60 bg-slate-950/50 backdrop-blur-md">
