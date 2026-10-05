@@ -53,6 +53,7 @@ export default function TopHeader({
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isProvenanceOpen, setIsProvenanceOpen] = useState(false);
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
   const [activeHorizon, setActiveHorizon] = useState<'24H' | '7D' | '30D'>(selectedTimeHorizon);
   const [currentDate, setCurrentDate] = useState<string>('Oct 5, 2026');
@@ -238,6 +239,16 @@ export default function TopHeader({
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 NOMINAL MONITORING
               </span>
+
+              {/* NASA OSDR + SIMULATION Badge Modal Trigger */}
+              <button
+                type="button"
+                onClick={() => setIsProvenanceOpen(true)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 cursor-pointer transition ml-1 shrink-0"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse" />
+                <span>● NASA OSDR + SIMULATION</span>
+              </button>
             </div>
 
             {/* Right Controls: Target Selector (if FMO), Date, Time Horizon */}
@@ -290,6 +301,57 @@ export default function TopHeader({
       </header>
 
       {/* Modals */}
+      {isProvenanceOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 text-slate-900 space-y-5 relative">
+            <button
+              type="button"
+              onClick={() => setIsProvenanceOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-slate-700 text-sm font-extrabold p-2"
+            >
+              ✕
+            </button>
+            <div className="space-y-1">
+              <span className="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase bg-purple-100 text-purple-700 border border-purple-200">
+                Data Provenance & Methodology
+              </span>
+              <h2 className="text-2xl font-black tracking-tight text-slate-900">NASA OSDR vs STAR+ Telemetry</h2>
+              <p className="text-xs text-slate-500 font-medium">Grounding research benchmarks with simulated operational telemetry</p>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              <div className="p-4 rounded-2xl bg-purple-50/70 border border-purple-100 space-y-2">
+                <h3 className="font-extrabold text-purple-900 uppercase tracking-wider text-[11px]">NASA Open Science Data Repository (OSDR)</h3>
+                <p className="text-slate-700 leading-relaxed">
+                  STAR+ integrates open-access spaceflight multi-omics datasets from NASA OSDR for cross-subject biomarker validation and machine learning classification benchmarking:
+                </p>
+                <ul className="list-disc pl-4 space-y-1 text-slate-700 font-medium">
+                  <li><strong>OSD-569:</strong> Transcriptomics array profiling blood gene expression across crew subjects.</li>
+                  <li><strong>OSD-575:</strong> Plasma proteomics profiling targeted cytokines (CXCL2, IL-17E, CTACK, MPO).</li>
+                  <li><strong>OSD-656:</strong> Urine metabolomics assays examining spaceflight physiological baseline shifts.</li>
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-blue-50/70 border border-blue-100 space-y-2">
+                <h3 className="font-extrabold text-blue-900 uppercase tracking-wider text-[11px]">STAR+ Aurora-1 Operational Telemetry</h3>
+                <p className="text-slate-700 leading-relaxed">
+                  Simulated high-frequency astronaut sensor telemetry (Heart Rate, SpO2, Blood Pressure, Circadian Sleep, Microgravity Strain) representing live deep-space mission operational tracking. Operational telemetry feeds deterministic rule engines and ML inference pipelines for continuous astronaut health surveillance.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => setIsProvenanceOpen(false)}
+                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-extrabold text-xs hover:bg-slate-800 transition cursor-pointer"
+              >
+                Close Provenance View
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {isSearchOpen && <GlobalSearchModal isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />}
       {isNotificationsOpen && <NotificationModal isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />}
       <SettingsModal 

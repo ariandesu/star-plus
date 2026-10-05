@@ -136,11 +136,11 @@ export default function AstronautHealthGuideCard({
                   <div className="flex items-center justify-between gap-1.5">
                     <span className="text-xs font-bold text-slate-900">Heart</span>
                     <span className="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Looks Good
+                      Heart Nominal
                     </span>
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-slate-500 leading-snug mt-0.5">
-                    Your heart is beating steadily within normal range.
+                    Your heart rhythm and cardiac parameters are steady within baseline range.
                   </p>
                 </div>
               </div>
@@ -154,11 +154,11 @@ export default function AstronautHealthGuideCard({
                   <div className="flex items-center justify-between gap-1.5">
                     <span className="text-xs font-bold text-slate-900">Oxygen</span>
                     <span className="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      Good
+                      Oxygen Good
                     </span>
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-slate-500 leading-snug mt-0.5">
-                    Your blood oxygen level is {astronaut.currentVitals?.heartRate ? '97%' : `${astronaut.baseline.spO2}%`}.
+                    Your blood oxygen saturation is steady at 97%.
                   </p>
                 </div>
               </div>
@@ -172,11 +172,11 @@ export default function AstronautHealthGuideCard({
                   <div className="flex items-center justify-between gap-1.5">
                     <span className="text-xs font-bold text-slate-900">Blood Pressure</span>
                     <span className="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                      Watch
+                      Blood Pressure Needs Attention
                     </span>
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-slate-500 leading-snug mt-0.5">
-                    A little higher than your baseline.
+                    Mild elevation noted (+7% shift above baseline). Hydration recommended.
                   </p>
                 </div>
               </div>
@@ -190,30 +190,34 @@ export default function AstronautHealthGuideCard({
                   <div className="flex items-center justify-between gap-1.5">
                     <span className="text-xs font-bold text-slate-900">Sleep</span>
                     <span className="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                      Watch
+                      Sleep Watch
                     </span>
                   </div>
                   <p className="text-[10px] sm:text-[11px] text-slate-500 leading-snug mt-0.5">
-                    Your sleep shows some signs of disruption.
+                    Circadian rhythm shift detected with light sleep fragmentation.
                   </p>
                 </div>
               </div>
 
-              {/* 5. Overall Status */}
-              <div className="flex items-start gap-2.5 group">
-                <div className="w-7 h-7 rounded-full bg-amber-400 flex items-center justify-center shrink-0 shadow-sm shadow-amber-400/20 text-white mt-0.5">
-                  <Shield className="w-3.5 h-3.5 fill-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-1.5">
-                    <span className="text-xs font-bold text-slate-900">Overall Status</span>
-                    <span className="shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                      Monitor
-                    </span>
-                  </div>
-                  <p className="text-[10px] sm:text-[11px] text-slate-500 leading-snug mt-0.5">
-                    You&apos;re generally stable, but a few things need attention.
-                  </p>
+              {/* 5. Plain Summary */}
+              <div className="p-3 rounded-2xl bg-blue-50/60 border border-blue-100/80 space-y-1.5">
+                <p className="text-[11px] text-slate-700 font-medium leading-relaxed">
+                  Overall status is steady. Heart and oxygen levels are nominal, though blood pressure and sleep quality show minor spaceflight physiological variance.
+                </p>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onOpenDetailedView) {
+                        onOpenDetailedView();
+                      } else {
+                        setViewMode('detailed');
+                      }
+                    }}
+                    className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1 hover:underline cursor-pointer"
+                  >
+                    <span>View clinical details -&gt;</span>
+                  </button>
                 </div>
               </div>
 

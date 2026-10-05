@@ -764,28 +764,28 @@ export default function MedicalPage() {
 
               {/* KPI Performance Cards Bar */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50/60 border border-blue-100">
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-purple-50 to-indigo-50/60 border border-purple-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-blue-900 uppercase tracking-wider">RandomForest OOF Accuracy</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-600 text-white">96.4%</span>
+                    <span className="text-xs font-extrabold text-purple-900 uppercase tracking-wider">Research Cross-Validation AUC</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-purple-600 text-white">Research AUC 89.6%</span>
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-2xl font-black text-slate-900">27 / 28</span>
-                    <span className="text-xs text-slate-500 font-semibold">samples correctly classified</span>
+                    <span className="text-2xl font-black text-slate-900">89.6%</span>
+                    <span className="text-xs text-slate-500 font-semibold">AUC performance metric</span>
                   </div>
                   <p className="text-[11px] text-slate-600 mt-1">Top predictors: CXCL2, IL-17E/IL-25, CTACK, MCV, MPO</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50/60 border border-emerald-100">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-extrabold text-emerald-900 uppercase tracking-wider">LogisticRegression OOF Accuracy</span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white">96.4%</span>
+                    <span className="text-xs font-extrabold text-emerald-900 uppercase tracking-wider">Out-of-Fold (OOF) Classification</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-600 text-white">OOF Accuracy 78.6%</span>
                   </div>
                   <div className="mt-2 flex items-baseline gap-2">
-                    <span className="text-2xl font-black text-slate-900">27 / 28</span>
-                    <span className="text-xs text-slate-500 font-semibold">samples correctly classified</span>
+                    <span className="text-2xl font-black text-slate-900">22 / 28</span>
+                    <span className="text-xs text-slate-500 font-semibold">samples out-of-fold evaluated</span>
                   </div>
-                  <p className="text-[11px] text-slate-600 mt-1">Linear decision boundary with standard scaling & L2 regularization</p>
+                  <p className="text-[11px] text-slate-600 mt-1">Linear decision boundary with standard scaling &amp; L2 regularization</p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-amber-50/40 border border-slate-200/80">

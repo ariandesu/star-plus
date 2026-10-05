@@ -122,6 +122,12 @@ export default function LandingPage() {
         {/* Left Hero Marketing Column */}
         <div className="lg:col-span-6 space-y-6 pr-0 lg:pr-6">
           <div className="space-y-4">
+            {/* Prominent Audit Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-purple-900/60 to-blue-900/60 border border-purple-500/40 text-purple-200 text-xs font-bold shadow-lg shadow-purple-900/20 backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+              <span>Research Prototype • NASA OSDR + Simulated Telemetry</span>
+            </div>
+
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.1] drop-shadow-md">
               Healthier <br />
               Missions, <br />
@@ -220,8 +226,49 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Login Form */}
-            <form onSubmit={handleLogin} className="space-y-3.5">
+            {/* Demo Instant Access & Login Form */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => {
+                  const res = authService.login(username, password);
+                  if (res.success && res.session) {
+                    const targetRoute = authService.getRoleDefaultRoute(res.session.role);
+                    router.push(targetRoute);
+                  } else {
+                    authService.login('astronaut01', 'demo123');
+                    router.push('/astronaut');
+                  }
+                }}
+                className="w-full py-3 px-6 rounded-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black text-sm tracking-wide shadow-lg shadow-emerald-500/25 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <span>🚀 Enter Demo Mode</span>
+              </button>
+
+              {/* Quick Credentials Card */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 text-xs">
+                <div className="flex items-center justify-between font-extrabold text-slate-800">
+                  <span>Quick Credentials</span>
+                  <span className="text-[10px] font-semibold text-slate-500">Password: demo123</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5 text-[10px]">
+                  <div className="p-1.5 rounded-xl bg-white border border-slate-200">
+                    <div className="font-bold text-blue-600">Astronaut</div>
+                    <div className="text-slate-500">astronaut01</div>
+                  </div>
+                  <div className="p-1.5 rounded-xl bg-white border border-slate-200">
+                    <div className="font-bold text-teal-600">Medical FMO</div>
+                    <div className="text-slate-500">medical01</div>
+                  </div>
+                  <div className="p-1.5 rounded-xl bg-white border border-slate-200">
+                    <div className="font-bold text-purple-600">Control</div>
+                    <div className="text-slate-500">control01</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Login Form */}
+              <form onSubmit={handleLogin} className="space-y-3 pt-1">
               {/* Username Input */}
               <div className="space-y-1">
                 <label className="block text-xs font-bold text-slate-700">
@@ -278,6 +325,7 @@ export default function LandingPage() {
                 <ArrowRight className="w-4 h-4 stroke-[2.5]" />
               </button>
             </form>
+            </div>
 
             {/* Card Footer Note */}
             <div className="pt-1 text-center flex items-center justify-center gap-1.5 text-[11px] font-medium text-slate-400">

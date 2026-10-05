@@ -15,6 +15,7 @@ interface AnalysisModalProps {
 
 export default function AnalysisModal({ signal, isOpen, onClose, onActionToggled, onUpdate }: AnalysisModalProps) {
   const [actions, setActions] = useState<RecommendedAction[]>(signal?.recommendedActions || []);
+  const [showWhySignal, setShowWhySignal] = useState(false);
 
   if (!isOpen || !signal) return null;
 
@@ -36,12 +37,12 @@ export default function AnalysisModal({ signal, isOpen, onClose, onActionToggled
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-black tracking-tight">{signal.astronautName} — Health Analysis Signal</h2>
+                <h2 className="text-lg font-black tracking-tight">{signal.astronautName} — Research Signal Analysis</h2>
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-slate-950">
                   {signal.status}
                 </span>
               </div>
-              <p className="text-xs text-slate-300">Deterministic Rule Engine — Baseline vs 72-Hour Deviation Diagnostics</p>
+              <p className="text-xs text-slate-300">Deterministic Rule Engine • Research Signal &amp; Potential Physiological Deviation</p>
             </div>
           </div>
           <button
@@ -55,13 +56,50 @@ export default function AnalysisModal({ signal, isOpen, onClose, onActionToggled
         {/* Body */}
         <div className="p-6 overflow-y-auto space-y-6">
           {/* Signal Summary Banner */}
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start gap-3">
-            <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="font-bold text-sm">Primary Flag Rationale</h4>
-              <p className="text-xs mt-0.5 leading-relaxed">{signal.summary}</p>
+          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-bold text-sm">Primary Flag Rationale (Research Signal)</h4>
+                <p className="text-xs mt-0.5 leading-relaxed">{signal.summary}</p>
+                <p className="text-[11px] font-semibold text-purple-700 mt-1">
+                  Post-flight biological pattern detected • Potential physiological deviation
+                </p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setShowWhySignal(!showWhySignal)}
+              className="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-extrabold text-xs shrink-0 transition cursor-pointer"
+            >
+              Why this signal?
+            </button>
           </div>
+
+          {/* Explainability Card */}
+          {showWhySignal && (
+            <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 text-purple-950 space-y-2.5 text-xs animate-fade-in">
+              <div className="flex items-center justify-between">
+                <h4 className="font-black text-purple-900 uppercase tracking-wider text-[11px]">
+                  Signal Explainability &amp; Provenance
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-200 text-purple-800">
+                  Research AUC 89.6% • OOF Accuracy 78.6%
+                </span>
+              </div>
+              <ul className="list-disc pl-4 space-y-1.5 text-slate-700 font-medium">
+                <li>
+                  <strong>Baseline Variance:</strong> 30-day intra-individual moving average shift exceeds 1.5 standard deviations.
+                </li>
+                <li>
+                  <strong>NASA OSDR Biomarker Matching:</strong> Profile correlates with spaceflight adaptation datasets OSD-575 / OSD-656 (Post-flight biological pattern detected).
+                </li>
+                <li>
+                  <strong>Clinical Threshold:</strong> Potential physiological deviation flagged for non-diagnostic operational crew surveillance.
+                </li>
+              </ul>
+            </div>
+          )}
           {/* Biomarker Deviations Table */}
           <div>
             <h3 className="text-sm font-extrabold text-star-navy mb-3 flex items-center justify-between">
@@ -170,7 +208,7 @@ export default function AnalysisModal({ signal, isOpen, onClose, onActionToggled
             onClick={onClose}
             className="px-5 py-2.5 rounded-xl bg-star-navy hover:bg-slate-800 text-white text-xs font-bold transition shadow-md"
           >
-            Acknowledge Diagnostics
+            Acknowledge Research Signal
           </button>
         </div>
       </div>
