@@ -123,7 +123,7 @@ export default function TopHeader({
     <>
       <header className="w-full bg-white border-b border-slate-100 shadow-xs sticky top-0 z-40">
         {/* Top Bar: Brand, Navigation, Search, Notifications, Profile */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           
           {/* Logo & Brand */}
           <div className="flex items-center gap-6">
@@ -232,7 +232,7 @@ export default function TopHeader({
 
         {/* Sub-Header Row: Greeting, Mission Pill, Date & Horizon Selector */}
         <div className="bg-slate-50/70 border-t border-slate-100 px-4 sm:px-6 lg:px-8 py-3.5">
-          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             
             {/* Greeting & Subtitle */}
             <div className="flex items-center gap-3">
