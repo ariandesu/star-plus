@@ -466,6 +466,7 @@ export default function MedicalPage() {
                     type="text"
                     value={newNote}
                     onChange={(e) => setNewNote(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddNote(); }}
                     placeholder={`Log clinical recommendation for ${currentCrewItem.name}...`}
                     className="flex-1 px-4 py-2 rounded-xl bg-slate-100 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
